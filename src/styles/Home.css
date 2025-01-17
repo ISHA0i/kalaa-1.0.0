@@ -1,0 +1,12 @@
+/* filepath: /d:/kalaa/kalaa-1.0.0/src/components/Home.css */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 95vh;
+    width: 100vw;
+  }
+  
+  .text-center {
+    text-align: center;
+  }
