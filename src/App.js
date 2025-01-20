@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./App.css";
-import { Product, Contact, Home,About } from "./components/Page.js";
-import { Account,SignIn,Order } from "./components/PagePersonal.js";
+import { Product, Contact, Home, About } from "./components/Page.js";
+import { Account, SignIn, Order } from "./components/PagePersonal.js";
 
 function App() {
-
   return (
     <Router>
       <Routes>
@@ -18,7 +17,6 @@ function App() {
         <Route path="/Account" element={<Account />} />
         <Route path="/SignIn" element={<SignIn />} />
         <Route path="/Order" element={<Order />} />
-
       </Routes>
     </Router>
   );

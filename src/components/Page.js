@@ -6,17 +6,16 @@ import Contact_page from "./ContactPage";
 import Home_page from "./Home";
 import About_page from "./AboutPage";
 
- const HomeP = () => {
+const HomeP = () => {
   return (
     <div className="Home_page_container">
       <Home_page />
       <Product_page />
-     
     </div>
   );
 };
 
- const ProductP = () => {
+const ProductP = () => {
   return (
     <div className="Product_page_container">
       <Product_page />
@@ -25,18 +24,18 @@ import About_page from "./AboutPage";
 };
 // if(WrappedComponent === Contact_page){
 //   return (
-    
+
 //   );
 
 // }
- const ContactP = () => {
+const ContactP = () => {
   return (
     <div className="Contact_page_container">
       <Contact_page />
     </div>
   );
 };
- const AboutP = () => {
+const AboutP = () => {
   return (
     <div className="About_page_container">
       <About_page />

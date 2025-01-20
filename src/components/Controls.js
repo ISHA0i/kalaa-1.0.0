@@ -8,7 +8,6 @@ import "../styles/Controls.css";
 const Controls = (WrappedComponent) => {
   return () => (
     <div>
-
       <div className="Navbar_page_container">
         <Navbar_page />
       </div>
@@ -28,7 +27,6 @@ const Controls = (WrappedComponent) => {
       <div className="Footer_page_container">
         <Footer />
       </div>
-      
     </div>
   );
 };
