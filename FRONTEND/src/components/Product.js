@@ -14,6 +14,7 @@ const Product = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log('Fetched products:', data); // Debug log
         setProducts(data);
       } catch (error) {
         setError(error.message);
@@ -35,7 +36,7 @@ const Product = () => {
           <div className="col-md-4" key={product.id}>
             <div className="card">
               <img
-                src={product.images[0]}
+                src={product.images && product.images[0] ? product.images[0] : 'placeholder.jpg'}
                 className="card-photoo-top"
                 alt={product.name}
               />
