@@ -2,14 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "Server.js",
   "scripts": {
-    "start": "cross-env PORT=3001 react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "backend": "node ../BACKEND/index.js",
-    "both": "concurrently \"npm run start\" \"npm run backend\""
+    "start": "node Server.js",
+    "dev": "nodemon Server.js",
+    "build": "echo 'Backend build step - not required'"
   },
   "keywords": [],
   "author": "",

@@ -1,52 +1,50 @@
-import React from "react";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import '../styles/Product.css';
-import decor from "../Assetes/images/decor.jpg";
-import ciramic from "../Assetes/images/ciramic.jpeg";
-import braslet from "../Assetes/images/braslet.jpg";
-
 
 const Product = () => {
-  
-const products_Id = [
-  {
-    id: 1,
-    title: "Product 1",
-    description: "Short product description goes here.",
-    imageUrl: ciramic,
-  },
-  {
-    id: 2,
-    title: "Product 2",
-    description: "Short product description goes here.",
-    imageUrl: braslet,
-  },
-  {
-    id: 3,
-    title: "Product 3",
-    description: "Short product description goes here.",
-    imageUrl: decor,
-    
-  },
-  
-];
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/products');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        setError(error.message);
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
-    <div className="container1 ">
+    <div className="container1">
       <div className="row">
-        {products_Id.map((product) => (
+        {products.map((product) => (
           <div className="col-md-4" key={product.id}>
-            <div className="card" >
+            <div className="card">
               <img
-                src={product.imageUrl}
+                src={product.images[0]}
                 className="card-photoo-top"
-                alt="Product Image"
+                alt={product.name}
               />
               <div className="card-body">
-                <h5 className="card-title">{product.title}</h5>
+                <h5 className="card-title">{product.name}</h5>
                 <p className="card-text">{product.description}</p>
-                <a href="/" className="btn btn-primary">
+                <Link to={`/product/${product.id}`} className="btn btn-primary">
                   Buy Now
-                </a>
+                </Link>
               </div>
             </div>
           </div>

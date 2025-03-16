@@ -5,6 +5,7 @@
   "dependencies": {
     "concurrently": "^9.1.2",
     "cra-template": "1.2.0",
+    "cross-env": "^7.0.3",
     "kalaa": "file:",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -14,11 +15,11 @@
     "webpack": "^5.97.1"
   },
   "scripts": {
-    "start": "cross-env PORT=3001 react-scripts start && echo Frontend running on port %PORT%",
+    "start": "cross-env PORT=3001 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "both": "concurrently \"npm run start\" \"npm run build\""
+    "both": "concurrently \"npm run start\" \"cd ../BACKEND && npm start\""
   },
   "eslintConfig": {
     "extends": [

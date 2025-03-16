@@ -1,12 +1,19 @@
 const mongoose = require('mongoose');
-const mongoURI = "mongodb://localhost:27017/";
+require('dotenv').config();
+
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/kalaa';
 
 const connectToMongo = async () => {
   try {
-    await mongoose.connect(mongoURI);
-    console.log("Connected to MongoDB");
-  } catch (error) {
-    console.error("Failed to connect to MongoDB", error);
+    await mongoose.connect(mongoURI, { 
+      useNewUrlParser: true, 
+      useUnifiedTopology: true 
+    });
+    console.log('MongoDB connected successfully');
+    return mongoose.connection;
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    throw err; // Propagate the error
   }
 };
 
