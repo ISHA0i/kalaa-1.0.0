@@ -11,5 +11,6 @@ root.render(
   </React.StrictMode>
 );
 
+console.log(`Frontend running on port ${process.env.PORT || 3001}`);
 
 reportWebVitals();

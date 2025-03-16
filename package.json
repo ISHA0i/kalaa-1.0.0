@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  },
+  "scripts": {
+    "start": "cross-env PORT=3001 react-scripts start && echo Frontend running on port %PORT%",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "both": "concurrently \"npm run start\" \"npm run backend\""
+  }
+}
