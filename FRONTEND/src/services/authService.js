@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL + '/auth'; // Use environment variable for API base URL
+const API_URL = process.env.REACT_APP_API_URL + '/api/auth'; // Use environment variable for API base URL
 
 // Sign-Up API
 export const signUp = async (userData) => {

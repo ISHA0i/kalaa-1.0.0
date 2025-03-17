@@ -1,25 +1,31 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import "./App.css";
-import { Product, Contact, Home, About } from "./components/Page.js";
-import { SignIn, SignUpComponent, OrderComponent} from "./components/PagePersonal.js"; // Correct imports
+import {
+  HomeComponent,
+  ProductComponent,
+  AboutComponent,
+  ContactComponent,
+  SignInComponent,
+  SignUpComponent,
+  OrderComponent,
+} from "./context/Page";
 
-function App() {
+const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/App.js" element={<Home />} />
-        <Route path="/Home" element={<Home />} />
-        <Route path="/Product" element={<Product someProp="Value1" />} />
-        <Route path="/Contact" element={<Contact />} />
-        <Route path="/About" element={<About />} />
-        <Route path="/SignIn" element={<SignIn />} /> {/* Ensure case matches */}
+        <Route path="/" element={<HomeComponent />} />
+        <Route path="/App.js" element={<HomeComponent />} />
+        <Route path="/Home" element={<HomeComponent />} />
+        <Route path="/Product" element={<ProductComponent someProp="Value1" />} />
+        <Route path="/Contact" element={<ContactComponent />} />
+        <Route path="/About" element={<AboutComponent />} />
+        <Route path="/SignIn" element={<SignInComponent />} /> {/* Ensure case matches */}
         <Route path="/SignUp" element={<SignUpComponent />} />
         <Route path="/Order" element={<OrderComponent />} />
       </Routes>
     </Router>
   );
-}
+};
 
 export default App;

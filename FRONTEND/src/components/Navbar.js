@@ -1,6 +1,6 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import "../styles/Navbar.css";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import '../styles/Navbar.css';
 
 const Navbar = (props) => {
   return (
@@ -72,35 +72,14 @@ const Navbar = (props) => {
                 </a>
                 <ul className="dropdown-menu">
                   <li>
-                    <Link className="nav-link dropdown-item" to="/Account">
-                      My Account
+                    <Link className="nav-link dropdown-item" to="/SignIn">
+                      SignIn
                     </Link>
                   </li>
                   <li>
                     <Link className="nav-link dropdown-item" to="/SignUp">
                       Sign Up
                     </Link>
-                  </li>
-                  <li>
-                    <div className=" dropdown-item form-check form-switch switch-container">
-                      <div className="switch-label">
-                      <label
-                        className="form-check-label"
-                        htmlFor="flexSwitchCheckDefault"
-                      >
-                        Dark Mode
-                      </label>
-                      </div>
-                       <div className="switch">
-                      <input
-                        className="form-check-input"
-                        onClick={props.toggleMOde}
-                        type="checkbox"
-                        role="switch"
-                        id="flexSwitchCheckDefault"></input>
-                       </div>
-                      
-                    </div>
                   </li>
                 </ul>
               </li>

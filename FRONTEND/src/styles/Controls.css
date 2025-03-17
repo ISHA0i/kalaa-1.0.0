@@ -1,19 +1,27 @@
-.Navbar_page_container{
-    display:flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 60px;
-    width: 100%;
-    z-index: 1000;
-    background-color: #ffffff;
+.Navbar_page_container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 60px;
+  width: 100%;
+  z-index: 1000;
+  background-color: #ffffff;
 }
+
 .content {
-    display:flex;
-    flex-direction: column;
-    padding-top:60px;
+  display: flex;
+  flex-direction: column;
+  padding-top:60px;
 }
+
+.Footer_page_container {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f1f1f1;
+  text-align: center;
+  }

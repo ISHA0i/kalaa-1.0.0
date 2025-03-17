@@ -6,13 +6,12 @@
 }
 
 .navbar {
-    padding-bottom: 0px;
-    margin-bottom: 0 !important;
-    position: fixed;
-    top: 0;
-    width: 100vw;
-    z-index: 1000;
-    /* Ensures the navbar is on top */
+  padding: 10px 20px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  /* Ensures the navbar is on top */
 }
 
 
@@ -27,5 +26,7 @@
 }
 
 .switch-container {
-    display: flex;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }

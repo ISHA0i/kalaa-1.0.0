@@ -16,10 +16,10 @@ const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form Data:', formData); // Debugging log
+    // console.log('Form Data:', formData); // Debugging log
     try {
       const response = await signUp(formData);
-      console.log('Sign-Up Response:', response); // Debugging log
+      // console.log('Sign-Up Response:', response); // Debugging log
       setMessage(response.message);
       setError('');
     } catch (err) {
