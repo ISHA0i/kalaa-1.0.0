@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { signIn } from '../services/authService'; // Correctly import signIn
+import { signUp } from '../../../services/authService';
 
-const SignIn = () => {
-  const [credentials, setCredentials] = useState({
+const SignUp = () => {
+  const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
   });
@@ -10,17 +11,19 @@ const SignIn = () => {
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // console.log('Form Data:', formData); // Debugging log
     try {
-      const response = await signIn(credentials); // Call the signIn function
+      const response = await signUp(formData);
+      // console.log('Sign-Up Response:', response); // Debugging log
       setMessage(response.message);
       setError('');
-      localStorage.setItem('token', response.token); // Save token to localStorage
     } catch (err) {
+      console.error('Sign-Up Error:', err); // Debugging log
       setError(err.message || 'An error occurred');
       setMessage('');
     }
@@ -28,15 +31,23 @@ const SignIn = () => {
 
   return (
     <div>
-      <h2>Sign In</h2>
+      <h2>Sign Up</h2>
       {message && <p style={{ color: 'green' }}>{message}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <input
+          type="text"
+          name="name"
+          placeholder="Name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
+        <input
           type="email"
           name="email"
           placeholder="Email"
-          value={credentials.email}
+          value={formData.email}
           onChange={handleChange}
           required
         />
@@ -44,14 +55,14 @@ const SignIn = () => {
           type="password"
           name="password"
           placeholder="Password"
-          value={credentials.password}
+          value={formData.password}
           onChange={handleChange}
           required
         />
-        <button type="submit">Sign In</button>
+        <button type="submit">Sign Up</button>
       </form>
     </div>
   );
 };
 
-export default SignIn;
+export default SignUp;

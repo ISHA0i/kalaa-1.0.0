@@ -2,14 +2,14 @@ import React from 'react';
 import '../styles/Page.css';
 import Controls from './Controls';
 
-import SignIn from '../components/SignIn'; // Import SignIn component
-import SignUp from '../components/SignUp'; // Correctly import SignUp component
+import SignIn from '../components/view/Account/SignIn'; // Import SignIn component
+import SignUp from '../components/view/Account/SignUp'; // Correctly import SignUp component
 import Order from '../components/Order'; // Import Order component
 
 import Product from '../components/Product';
-import Contact from '../components/ContactPage';
+import Contact from '../components/view/Pages/Contact';
 import Home from '../components/Home';
-import About from '../components/AboutPage';
+import About from '../components/view/Pages/About';
 
 // Sign-In Page Component
 const SignInPage = () => {
