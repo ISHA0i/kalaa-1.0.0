@@ -1,8 +1,24 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Navbar.css';
+import { logout } from '../services/authService';
 
 const Navbar = (props) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track login status
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if the token exists in localStorage
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token); // Set isLoggedIn to true if token exists
+  }, []);
+
+  const handleLogout = () => {
+    logout(); // Call the logout function
+    setIsLoggedIn(false); // Update login status
+    navigate('/SignIn'); // Redirect to sign-in page
+  };
+
   return (
     <>
       <nav
@@ -71,20 +87,46 @@ const Navbar = (props) => {
                   </svg>
                 </a>
                 <ul className="dropdown-menu">
-                  <li>
-                    <Link className="nav-link dropdown-item" to="/SignIn">
-                      SignIn
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="nav-link dropdown-item" to="/SignUp">
-                      Sign Up
-                    </Link>
-                  </li>
+                  {!isLoggedIn && (
+                    <>
+                      <li>
+                        <Link className="nav-link dropdown-item" to="/SignIn">
+                          SignIn
+                        </Link>
+                      </li>
+                      <li>
+                        <Link className="nav-link dropdown-item" to="/SignUp">
+                          Sign Up
+                        </Link>
+                      </li>
+                    </>
+                  )}
+                  {isLoggedIn && (
+                    <>
+                      <li>
+                        <Link className="nav-link dropdown-item" to="/Profile">
+                          Profile
+                        </Link>
+                      </li>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={handleLogout}
+                          style={{
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: 'none',
+                          }}
+                        >
+                          Logout
+                        </button>
+                      </li>
+                    </>
+                  )}
                 </ul>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/Order">
+                <Link className="nav-link" to="/Cart">
                   <i className="bi bi-cart-fill">{/* cart */}</i>
                 </Link>
               </li>
@@ -95,4 +137,5 @@ const Navbar = (props) => {
     </>
   );
 };
+
 export default Navbar;

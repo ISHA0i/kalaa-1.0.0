@@ -4,8 +4,8 @@ import Controls from './Controls';
 
 import SignIn from '../components/view/Account/SignIn'; // Import SignIn component
 import SignUp from '../components/view/Account/SignUp'; // Correctly import SignUp component
-import Order from '../components/Order'; // Import Order component
-
+import Cart from '../components/Cart'; // Import Order component
+import Profile from '../components/view/Account/Profile';
 import Product from '../components/Product';
 import Contact from '../components/view/Pages/Contact';
 import Home from '../components/Home';
@@ -30,10 +30,10 @@ const SignUpPage = () => {
 };
 
 // Order Page Component
-const OrderPage = () => {
+const CartPage = () => {
   return (
     <div className="Order_page_container">
-      <Order />
+      <Cart />
     </div>
   );
 };
@@ -68,12 +68,18 @@ const AboutPage = () => {
     </div>
   );
 };
-
+const ProfilePage = () => {
+  return (
+    <div className="Profile_page_container">
+      <Profile />
+    </div>
+  );
+};
 // Export components wrapped with Controls HOC
 export const SignInComponent = Controls(SignInPage); // Sign-In page wrapped with Controls
 export const SignUpComponent = Controls(SignUpPage); // Sign-Up page wrapped with Controls
-export const OrderComponent = Controls(OrderPage); // Order page wrapped with Controls
-
+export const CartComponent = Controls(CartPage); // Order page wrapped with Controls
+export const ProfileComponent = Controls(ProfilePage);
 export const AboutComponent = Controls(AboutPage);
 export const HomeComponent = Controls(HomePage);
 export const ProductComponent = Controls(ProductPage);

@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { signIn } from '../../../services/authService'; // Correctly import signIn
+import { useNavigate } from 'react-router-dom';
+import { signIn } from '../../../services/authService';
 
 const SignIn = () => {
-  const [credentials, setCredentials] = useState({
-    email: '',
-    password: '',
-  });
-  const [message, setMessage] = useState('');
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -16,20 +14,17 @@ const SignIn = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await signIn(credentials); // Call the signIn function
-      setMessage(response.message);
-      setError('');
-      localStorage.setItem('token', response.token); // Save token to localStorage
+      const response = await signIn(credentials);
+      localStorage.setItem('token', response.token); // Save token
+      navigate('/Profile'); // Redirect to profile
     } catch (err) {
       setError(err.message || 'An error occurred');
-      setMessage('');
     }
   };
 
   return (
     <div>
       <h2>Sign In</h2>
-      {message && <p style={{ color: 'green' }}>{message}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <input

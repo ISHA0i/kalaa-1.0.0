@@ -59,4 +59,10 @@ router.post(
   registerUser
 );
 
+// Logout Route (Optional: For token invalidation)
+router.post('/logout', (req, res) => {
+  // Invalidate the token (if using a token blacklist or similar mechanism)
+  res.status(200).json({ message: 'Logged out successfully' });
+});
+
 module.exports = router;

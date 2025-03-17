@@ -7,7 +7,8 @@ import {
   ContactComponent,
   SignInComponent,
   SignUpComponent,
-  OrderComponent,
+  CartComponent,
+  ProfileComponent,
 } from "./context/Page";
 
 const App = () => {
@@ -19,10 +20,11 @@ const App = () => {
         <Route path="/Home" element={<HomeComponent />} />
         <Route path="/Product" element={<ProductComponent someProp="Value1" />} />
         <Route path="/Contact" element={<ContactComponent />} />
+        <Route path="/Profile" element={<ProfileComponent />} />
         <Route path="/About" element={<AboutComponent />} />
         <Route path="/SignIn" element={<SignInComponent />} /> {/* Ensure case matches */}
         <Route path="/SignUp" element={<SignUpComponent />} />
-        <Route path="/Order" element={<OrderComponent />} />
+        <Route path="/Cart" element={<CartComponent />} />
       </Routes>
     </Router>
   );

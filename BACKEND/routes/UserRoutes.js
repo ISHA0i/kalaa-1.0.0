@@ -1,14 +1,13 @@
 const express = require('express');
-const authMiddleware = require('../middleware/authMiddleware');
 const User = require('../models/UserModel');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Protected route to get user details
+// Protected route to get user profile
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    // Fetch user details using the user ID from the token
-    const user = await User.findById(req.user.id).select('-password'); // Exclude the password field
+    const user = await User.findById(req.user.id).select('-password'); // Exclude password
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

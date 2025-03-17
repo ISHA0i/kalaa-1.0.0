@@ -21,3 +21,8 @@ export const signIn = async (credentials) => {
     throw error.response ? error.response.data : error;
   }
 };
+
+// Logout API
+export const logout = () => {
+  localStorage.removeItem('token'); // Remove token from localStorage
+};
