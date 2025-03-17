@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { createProduct, fetchAllProducts, fetchProductById, updateProduct } = require('../controller/ProductControll');
-const { Product } = require('../models/Productmodel');
+const { Product } = require('../models/ProductModel');
 const mongoose = require('mongoose');
 
 // Create a new product

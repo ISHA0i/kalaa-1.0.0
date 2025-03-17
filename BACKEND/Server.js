@@ -3,31 +3,29 @@ const express = require('express');
 const cors = require('cors');
 const connectToMongo = require('./DB');
 const productRoutes = require('./routes/ProductRoutes');
+const authRoutes = require('./routes/AuthRoutes');
+const userRoutes = require('./routes/UserRoutes');
 const errorHandler = require('./errors/servererror');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Initialize server
-const startServer = async () => {
-  try {
-    // Connect to MongoDB first
-    await connectToMongo();
-    
-    // Setup middleware
-    app.use(cors());
-    app.use(express.json());
-    app.use('/api/products', productRoutes);
-    app.use(errorHandler);
+// Connect to MongoDB
+connectToMongo();
 
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-startServer();
+// Routes
+app.use('/api/products', productRoutes);
+app.use('/api/auth', authRoutes); // Register AuthRoutes
+app.use('/api/users', userRoutes);
+
+// Error Handling Middleware
+app.use(errorHandler);
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
