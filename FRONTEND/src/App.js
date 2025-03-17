@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { Product, Contact, Home, About } from "./components/Page.js";
-import { Account, SignIn, Order } from "./components/PagePersonal.js";
+import { SignIn, SignUpComponent, OrderComponent} from "./components/PagePersonal.js"; // Correct imports
 
 function App() {
   return (
@@ -14,9 +14,9 @@ function App() {
         <Route path="/Product" element={<Product someProp="Value1" />} />
         <Route path="/Contact" element={<Contact />} />
         <Route path="/About" element={<About />} />
-        <Route path="/Account" element={<Account />} />
-        <Route path="/SignIn" element={<SignIn />} />
-        <Route path="/Order" element={<Order />} />
+        <Route path="/SignIn" element={<SignIn />} /> {/* Ensure case matches */}
+        <Route path="/SignUp" element={<SignUpComponent />} />
+        <Route path="/Order" element={<OrderComponent />} />
       </Routes>
     </Router>
   );

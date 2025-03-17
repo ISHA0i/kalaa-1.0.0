@@ -22,6 +22,7 @@ router.post(
 
     const { email, password } = req.body;
 
+    
     try {
       // Check if user exists
       const user = await User.findOne({ email });
@@ -45,7 +46,7 @@ router.post(
   }
 );
 
-// route 2:Sign-Up Route
+// Sign-Up Route
 router.post(
   '/signup',
   [

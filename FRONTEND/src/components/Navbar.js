@@ -72,17 +72,15 @@ const Navbar = (props) => {
                 </a>
                 <ul className="dropdown-menu">
                   <li>
-                    <Link className="nav-link dropdown-item " to="/Account">
+                    <Link className="nav-link dropdown-item" to="/Account">
                       My Account
                     </Link>
                   </li>
-
                   <li>
-                    <Link className="nav-link dropdown-item " to="/Signin">
-                      Sing In
+                    <Link className="nav-link dropdown-item" to="/SignUp">
+                      Sign Up
                     </Link>
                   </li>
-
                   <li>
                     <div className=" dropdown-item form-check form-switch switch-container">
                       <div className="switch-label">
