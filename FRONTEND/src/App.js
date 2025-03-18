@@ -10,6 +10,8 @@ import {
   CartComponent,
   ProfileComponent,
 } from "./context/Page";
+
+
 const App = () => {
   return (
     <Router>
@@ -24,7 +26,7 @@ const App = () => {
         <Route path="/SignIn" element={<SignInComponent />} /> {/* Ensure case matches */}
         <Route path="/SignUp" element={<SignUpComponent />} />
         <Route path="/Cart" element={<CartComponent />} />
-      </Routes>
+        </Routes>
     </Router>
   );
 };
