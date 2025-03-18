@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { signUp } from '../../../services/authService';
+import '../../../styles/SignUp.css';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -30,11 +31,11 @@ const SignUp = () => {
   };
 
   return (
-    <div>
-      <h2>Sign Up</h2>
+    <div className="signup-container">
+      <h2 className="signup-title">Sign Up</h2>
       {message && <p style={{ color: 'green' }}>{message}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
+      <form className="signup-form" onSubmit={handleSubmit}>
         <input
           type="text"
           name="name"

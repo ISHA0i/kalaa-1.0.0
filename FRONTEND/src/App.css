@@ -2,6 +2,12 @@ body, html {
   margin: 0;
   padding: 0;
 }
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure the body takes the full height of the viewport */
+  margin: 0;
+}
 .App {
   color: red;
   text-align: center;
@@ -40,5 +46,15 @@ body, html {
   to {
     transform: rotate(360deg);
   }
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.main-content {
+  flex: 1; /* Push the footer to the bottom if content is short */
 }
 

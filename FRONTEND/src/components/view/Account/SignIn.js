@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signIn } from '../../../services/authService';
+import '../../../styles/SignIn.css';
 
 const SignIn = () => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -23,10 +24,10 @@ const SignIn = () => {
   };
 
   return (
-    <div>
-      <h2>Sign In</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
+    <div className="signin-container">
+      <h2 className="signin-title">Sign In</h2>
+      {error && <p className="signin-error">{error}</p>}
+      <form className="signin-form" onSubmit={handleSubmit}>
         <input
           type="email"
           name="email"

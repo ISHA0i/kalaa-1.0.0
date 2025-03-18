@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import '../styles/Product.css';
 
 const Product = () => {
@@ -14,16 +13,40 @@ const Product = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Fetched products:', data); // Debug log
+        console.log(data); // Debug: Check if `price` exists in the response
         setProducts(data);
       } catch (error) {
         setError(error.message);
-        console.error('Error fetching products:', error);
       }
     };
 
     fetchProducts();
   }, []);
+
+  const handleBuyNow = (product) => {
+    // Get the existing cart from localStorage
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    // Check if the product already exists in the cart
+    const existingProductIndex = cart.findIndex((item) => item.id === product.id);
+
+    if (existingProductIndex !== -1) {
+      // If the product exists, increment its quantity
+      cart[existingProductIndex].quantity += 1;
+    } else {
+      // If the product does not exist, add it to the cart with quantity 1
+      cart.push({
+        ...product,
+        quantity: 1, // Add a default quantity of 1
+      });
+    }
+
+    // Save the updated cart back to localStorage
+    localStorage.setItem('cart', JSON.stringify(cart));
+
+    // Optionally, redirect to the cart page
+    window.location.href = '/Cart';
+  };
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -43,9 +66,13 @@ const Product = () => {
               <div className="card-body">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text">{product.description}</p>
-                <Link to={`/product/${product.id}`} className="btn btn-primary">
+                <p className="card-text"><strong>Price:</strong> ${product.price ? product.price.toFixed(2) : '0.00'}</p> {/* Ensure price is displayed */}
+                <button
+                  onClick={() => handleBuyNow(product)}
+                  className="btn btn-primary"
+                >
                   Buy Now
-                </Link>
+                </button>
               </div>
             </div>
           </div>

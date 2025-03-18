@@ -10,7 +10,6 @@ import {
   CartComponent,
   ProfileComponent,
 } from "./context/Page";
-
 const App = () => {
   return (
     <Router>

@@ -2,14 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const connectToMongo = require('./DB');
 const productRoutes = require('./routes/ProductRoutes');
 const authRoutes = require('./routes/AuthRoutes'); // Import AuthRoutes
 const userRoutes = require('./routes/UserRoutes');
 const errorHandler = require('./errors/servererror');
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = 5001;
 
 // Middleware
 app.use(cors());

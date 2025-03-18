@@ -4,7 +4,7 @@ import Controls from './Controls';
 
 import SignIn from '../components/view/Account/SignIn'; // Import SignIn component
 import SignUp from '../components/view/Account/SignUp'; // Correctly import SignUp component
-import Cart from '../components/Cart'; // Import Order component
+import Cart from '../components/view/cart/Cart'; // Import Order component
 import Profile from '../components/view/Account/Profile';
 import Product from '../components/Product';
 import Contact from '../components/view/Pages/Contact';

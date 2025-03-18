@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, from "react";{ useState } from "react";
 
 export default function ProductPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -51,3 +51,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+export default ProductPage;

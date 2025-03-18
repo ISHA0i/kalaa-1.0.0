@@ -2,10 +2,11 @@ const { Product } = require('../models/ProductModel');
 const mongoose = require('mongoose');
 
 exports.createProduct = async (req, res, next) => {
-  const product = new Product(req.body);
+  const { description, images, productId, name, price } = req.body; // Include price
+  const product = new Product({ description, images, productId, name, price }); // Add price to the product object
   try {
     const doc = await product.save();
-    res.status(201).json(doc);
+    res.status(201).json(doc); // Return the saved product
   } catch (err) {
     next(err); // Pass the error to the custom error handling middleware
   }
@@ -13,8 +14,9 @@ exports.createProduct = async (req, res, next) => {
 
 exports.fetchAllProducts = async (req, res, next) => {
   try {
-    const products = await Product.find();
-    res.status(200).json(products);
+    const products = await Product.find(); // Fetch all products
+    console.log(products); // Debug: Check if `price` exists in the database
+    res.status(200).json(products); // Return the products
   } catch (err) {
     next(err); // Pass the error to the custom error handling middleware
   }
@@ -54,8 +56,7 @@ exports.updateProduct = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    const updatedProduct = await product.save();
-    res.status(200).json(updatedProduct);
+    res.status(200).json(product);
   } catch (err) {
     next(err); // Pass the error to the custom error handling middleware
   }
