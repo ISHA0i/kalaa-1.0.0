@@ -1,9 +1,9 @@
-// filepath: d:\git clone\kalaa-1.0.0\BACKEND\middleware\authMiddleware.js
 const jwt = require('jsonwebtoken');
 const { logger } = require('../utils/logger');
 const User = require('../models/UserModel');
 
-const authMiddleware = async (req, res, next) => {
+// Verify JWT token
+const verifyToken = async (req, res, next) => {
   try {
     // Get token from header or cookie
     const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
@@ -52,28 +52,68 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// Role-based access control middleware
-const authorize = (...roles) => {
-  return (req, res, next) => {
+// Verify admin role
+const isAdmin = (req, res, next) => {
+  try {
     if (!req.user) {
-      logger.warn('Authorization attempted without authentication');
+      logger.warn('Admin verification attempted without authentication');
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    if (!roles.includes(req.user.role)) {
-      logger.warn('Unauthorized access attempt', {
+    if (req.user.role !== 'admin') {
+      logger.warn('Non-admin access attempt', { 
         userId: req.user._id,
-        requiredRoles: roles,
-        userRole: req.user.role
+        userRole: req.user.role 
       });
-      return res.status(403).json({ message: 'Access denied' });
+      return res.status(403).json({ message: 'Admin access required' });
     }
+
+    next();
+  } catch (error) {
+    logger.error('Admin verification error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Rate limiting middleware
+const rateLimit = (limit, windowMs) => {
+  const requests = new Map();
+
+  return (req, res, next) => {
+    const ip = req.ip;
+    const now = Date.now();
+    const windowStart = now - windowMs;
+
+    // Clean up old requests
+    requests.forEach((timestamp, key) => {
+      if (timestamp < windowStart) {
+        requests.delete(key);
+      }
+    });
+
+    // Get requests in window
+    const requestCount = (requests.get(ip) || [])
+      .filter(timestamp => timestamp > windowStart)
+      .length;
+
+    if (requestCount >= limit) {
+      logger.warn('Rate limit exceeded', { ip, requestCount });
+      return res.status(429).json({ 
+        message: 'Too many requests, please try again later' 
+      });
+    }
+
+    // Add current request
+    const userRequests = requests.get(ip) || [];
+    userRequests.push(now);
+    requests.set(ip, userRequests);
 
     next();
   };
 };
 
 module.exports = {
-  authMiddleware,
-  authorize
-};
+  verifyToken,
+  isAdmin,
+  rateLimit
+}; 

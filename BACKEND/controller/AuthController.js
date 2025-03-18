@@ -1,31 +1,132 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const User = require('../models/UserModel');
+const { logger } = require('../utils/logger');
+const { ValidationError, AuthenticationError, DatabaseError } = require('../errors/AppError');
+const { catchAsync } = require('../errors/servererror');
 
-exports.registerUser = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+exports.registerUser = catchAsync(async (req, res) => {
   const { name, email, password } = req.body;
 
-  try {
-    // Check if the user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+  // Validation
+  const error = new ValidationError('Registration validation failed');
+  if (!name) error.addError('name', 'Name is required');
+  if (!email) error.addError('email', 'Email is required');
+  if (!password) error.addError('password', 'Password is required');
+  if (error.validationErrors.length > 0) throw error;
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create a new user
-    const user = new User({ name, email, password: hashedPassword });
-    await user.save();
-
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  // Check if user exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ValidationError('User already exists');
   }
-};
+
+  // Hash password
+  const salt = await bcrypt.genSalt(12);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  // Create user
+  const user = new User({
+    name,
+    email,
+    password: hashedPassword
+  });
+
+  await user.save();
+
+  logger.info('New user registered', { userId: user._id, email });
+
+  res.status(201).json({
+    status: 'success',
+    message: 'User registered successfully'
+  });
+});
+
+exports.loginUser = catchAsync(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validation
+  const error = new ValidationError('Login validation failed');
+  if (!email) error.addError('email', 'Email is required');
+  if (!password) error.addError('password', 'Password is required');
+  if (error.validationErrors.length > 0) throw error;
+
+  // Find user
+  const user = await User.findOne({ email }).select('+password');
+  if (!user) {
+    throw new AuthenticationError('Invalid email or password');
+  }
+
+  // Check password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    throw new AuthenticationError('Invalid email or password');
+  }
+
+  // Generate JWT
+  const token = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+
+  // Set cookie options
+  const cookieOptions = {
+    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  };
+
+  // Remove password from output
+  user.password = undefined;
+
+  logger.info('User logged in', { userId: user._id, email });
+
+  // Send token as cookie
+  res.cookie('jwt', token, cookieOptions);
+  res.status(200).json({
+    status: 'success',
+    token,
+    data: { user }
+  });
+});
+
+exports.logoutUser = catchAsync(async (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true
+  });
+
+  logger.info('User logged out', { userId: req.user?._id });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully'
+  });
+});
+
+exports.forgotPassword = catchAsync(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ValidationError('Email is required');
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ValidationError('No user found with this email');
+  }
+
+  // Generate reset token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  logger.info('Password reset requested', { userId: user._id, email });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password reset token sent to email'
+  });
+});

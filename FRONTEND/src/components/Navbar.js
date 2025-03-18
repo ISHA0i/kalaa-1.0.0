@@ -1,141 +1,162 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Navbar.css';
-import { logout } from '../services/authService';
+import authService from '../services/authService';
 
-const Navbar = (props) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track login status
+const Navbar = ({ mode = 'light' }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if the token exists in localStorage
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token); // Set isLoggedIn to true if token exists
+    const checkAuth = () => {
+      const isAuth = authService.isAuthenticated();
+      setIsLoggedIn(isAuth);
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
   }, []);
 
-  const handleLogout = () => {
-    logout(); // Call the logout function
-    setIsLoggedIn(false); // Update login status
-    navigate('/SignIn'); // Redirect to sign-in page
-  };
+  useEffect(() => {
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const count = cart.reduce((total, item) => total + (item.quantity || 0), 0);
+      setCartCount(count);
+    };
+
+    updateCartCount();
+    window.addEventListener('storage', updateCartCount);
+    return () => window.removeEventListener('storage', updateCartCount);
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await authService.logout();
+      setIsLoggedIn(false);
+      navigate('/signin');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }, [navigate]);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
+
+  const isActive = useCallback((path) => {
+    return location.pathname === path ? 'active' : '';
+  }, [location]);
 
   return (
-    <>
-      <nav
-        className={`navbar navbar-expand-lg navbar-${props.mode} bg-${props.mode} nav`}
-      >
-        <div className="container-fluid">
-          <a className="navbar-brand" href="/App.js">
-            <b>KALAA</b>
-          </a>
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              <li className="nav-item">
-                <Link
-                  className="nav-link active "
-                  aria-current="page"
-                  to="/Home"
-                >
-                  Home
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/product">
-                  Product
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/contact">
-                  Contact
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/About">
-                  About
-                </Link>
-              </li>
+    <nav className={`navbar navbar-expand-lg navbar-${mode} bg-${mode} nav fixed-top`}>
+      <div className="container">
+        <Link className="navbar-brand fw-bold" to="/" onClick={closeMenu}>
+          KALAA
+        </Link>
 
-              <li className="nav-item dropdown">
-                <a
-                  className="nav-link dropdown-toggle"
-                  href="/"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
+        <button
+          className="navbar-toggler"
+          type="button"
+          onClick={toggleMenu}
+          aria-controls="navbarContent"
+          aria-expanded={isMenuOpen}
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        <div className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`} id="navbarContent">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            {[
+              { path: '/home', label: 'Home' },
+              { path: '/product', label: 'Product' },
+              { path: '/contact', label: 'Contact' },
+              { path: '/about', label: 'About' }
+            ].map(({ path, label }) => (
+              <li className="nav-item" key={path}>
+                <Link
+                  className={`nav-link ${isActive(path)}`}
+                  to={path}
+                  onClick={closeMenu}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi bi-person-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    {/* profile */}
-                    <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />
-                  </svg>
-                </a>
-                <ul className="dropdown-menu">
-                  {!isLoggedIn && (
-                    <>
-                      <li>
-                        <Link className="nav-link dropdown-item" to="/SignIn">
-                          SignIn
-                        </Link>
-                      </li>
-                      <li>
-                        <Link className="nav-link dropdown-item" to="/SignUp">
-                          Sign Up
-                        </Link>
-                      </li>
-                    </>
-                  )}
-                  {isLoggedIn && (
-                    <>
-                      <li>
-                        <Link className="nav-link dropdown-item" to="/Profile">
-                          Profile
-                        </Link>
-                      </li>
-                      <li>
-                        <button
-                          className="dropdown-item"
-                          onClick={handleLogout}
-                          style={{
-                            cursor: 'pointer',
-                            border: 'none',
-                            background: 'none',
-                          }}
-                        >
-                          Logout
-                        </button>
-                      </li>
-                    </>
-                  )}
-                </ul>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/Cart">
-                  <i className="bi bi-cart-fill">{/* cart */}</i>
+                  {label}
                 </Link>
               </li>
-            </ul>
-          </div>
+            ))}
+          </ul>
+
+          <ul className="navbar-nav">
+            <li className="nav-item dropdown">
+              <button
+                className="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="User menu"
+              >
+                <i className="bi bi-person-fill"></i>
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end">
+                {!isLoggedIn ? (
+                  <>
+                    <li>
+                      <Link className="dropdown-item" to="/signin" onClick={closeMenu}>
+                        Sign In
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item" to="/signup" onClick={closeMenu}>
+                        Sign Up
+                      </Link>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li>
+                      <Link className="dropdown-item" to="/profile" onClick={closeMenu}>
+                        Profile
+                      </Link>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={handleLogout}
+                      >
+                        Logout
+                      </button>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </li>
+            <li className="nav-item">
+              <Link
+                className="nav-link position-relative"
+                to="/cart"
+                onClick={closeMenu}
+                aria-label="Shopping cart"
+              >
+                <i className="bi bi-cart-fill"></i>
+                {cartCount > 0 && (
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {cartCount}
+                    <span className="visually-hidden">items in cart</span>
+                  </span>
+                )}
+              </Link>
+            </li>
+          </ul>
         </div>
-      </nav>
-    </>
+      </div>
+    </nav>
   );
 };
 
-export default Navbar;
+Navbar.propTypes = {
+  mode: PropTypes.oneOf(['light', 'dark'])
+};
+
+export default React.memo(Navbar);

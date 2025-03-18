@@ -4,13 +4,67 @@ require('dotenv').config();
 
 const mongoURI = process.env.MONGODB_URI;
 
+// MongoDB connection options
+const mongoOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  autoIndex: true, // Build indexes
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  family: 4, // Use IPv4, skip trying IPv6
+  retryWrites: true
+};
+
 const connectToMongo = async () => {
   try {
-    await mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log('MongoDB connected');
+    // Handle initial connection errors
+    mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err);
+    });
+
+    // Handle errors after initial connection
+    mongoose.connection.on('disconnected', () => {
+      console.warn('MongoDB disconnected. Attempting to reconnect...');
+    });
+
+    mongoose.connection.on('connected', () => {
+      console.log('MongoDB connected successfully');
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('MongoDB reconnected successfully');
+    });
+
+    // Clean up resources on process termination
+    process.on('SIGINT', async () => {
+      try {
+        await mongoose.connection.close();
+        console.log('MongoDB connection closed through app termination');
+        process.exit(0);
+      } catch (err) {
+        console.error('Error closing MongoDB connection:', err);
+        process.exit(1);
+      }
+    });
+
+    // Connect to MongoDB
+    await mongoose.connect(mongoURI, mongoOptions);
+    
+    // Enable debug mode in development
+    if (process.env.NODE_ENV === 'development') {
+      mongoose.set('debug', true);
+    }
+
   } catch (err) {
-    console.error('MongoDB connection error:', err);
-    process.exit(1); // Exit the process if the connection fails
+    console.error('Failed to connect to MongoDB:', err);
+    // Implement retry logic
+    if (err.name === 'MongooseServerSelectionError') {
+      console.log('Retrying connection in 5 seconds...');
+      setTimeout(connectToMongo, 5000);
+    } else {
+      process.exit(1); // Exit on other errors
+    }
   }
 };
 

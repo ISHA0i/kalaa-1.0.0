@@ -1,65 +1,205 @@
 const { Product } = require('../models/ProductModel');
 const mongoose = require('mongoose');
+const { logger } = require('../utils/logger');
+const { ValidationError, NotFoundError, DatabaseError } = require('../errors/AppError');
+const { catchAsync } = require('../errors/servererror');
+const cache = require('../utils/cache');
 
-exports.createProduct = async (req, res, next) => {
-  const { description, images, productId, name, price } = req.body; // Include price
-  const product = new Product({ description, images, productId, name, price }); // Add price to the product object
-  try {
-    const doc = await product.save();
-    res.status(201).json(doc); // Return the saved product
-  } catch (err) {
-    next(err); // Pass the error to the custom error handling middleware
+exports.createProduct = catchAsync(async (req, res) => {
+  const { description, images, productId, name, price } = req.body;
+
+  // Validation
+  const error = new ValidationError('Product validation failed');
+  if (!name) error.addError('name', 'Product name is required');
+  if (!price) error.addError('price', 'Product price is required');
+  if (!description) error.addError('description', 'Product description is required');
+  if (!productId) error.addError('productId', 'Product ID is required');
+  if (error.validationErrors.length > 0) throw error;
+
+  const product = new Product({ 
+    description, 
+    images, 
+    productId, 
+    name, 
+    price,
+    createdAt: new Date()
+  });
+
+  const savedProduct = await product.save();
+  
+  // Clear products cache
+  await cache.del('products:all');
+  
+  logger.info('Product created', { 
+    productId: savedProduct._id, 
+    name: savedProduct.name 
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: savedProduct
+  });
+});
+
+exports.fetchAllProducts = catchAsync(async (req, res) => {
+  // Try to get from cache first
+  const cachedProducts = await cache.get('products:all');
+  if (cachedProducts) {
+    return res.status(200).json({
+      status: 'success',
+      data: JSON.parse(cachedProducts),
+      source: 'cache'
+    });
   }
-};
 
-exports.fetchAllProducts = async (req, res, next) => {
-  try {
-    const products = await Product.find(); // Fetch all products
-    console.log(products); // Debug: Check if `price` exists in the database
-    res.status(200).json(products); // Return the products
-  } catch (err) {
-    next(err); // Pass the error to the custom error handling middleware
+  // Query parameters for filtering and pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
+
+  // Build query
+  const query = {};
+  if (req.query.name) {
+    query.name = { $regex: req.query.name, $options: 'i' };
   }
-};
+  if (req.query.minPrice) {
+    query.price = { $gte: parseFloat(req.query.minPrice) };
+  }
+  if (req.query.maxPrice) {
+    query.price = { ...query.price, $lte: parseFloat(req.query.maxPrice) };
+  }
 
-exports.fetchProductById = async (req, res, next) => {
+  // Execute query with pagination
+  const products = await Product.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const total = await Product.countDocuments(query);
+
+  // Cache results for 5 minutes
+  await cache.set('products:all', JSON.stringify(products), 'EX', 300);
+
+  logger.info('Products fetched', { 
+    count: products.length,
+    page,
+    limit
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: products,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit)
+    },
+    source: 'database'
+  });
+});
+
+exports.fetchProductById = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  console.log(`Fetching product with ID: ${id}`); // Debugging log
-
-  // Validate the ID format
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    console.error('Invalid product ID format'); // Debugging log
-    return res.status(400).json({ message: 'Invalid product ID format' });
+    throw new ValidationError('Invalid product ID format');
   }
 
-  try {
-    const product = await Product.findById(id);
-    console.log('Database query result:', product); // Debugging log
-
-    if (!product) {
-      console.error('Product not found'); // Debugging log
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    res.status(200).json(product);
-  } catch (err) {
-    console.error('Error fetching product:', err.message); // Debugging log
-    next(err); // Pass the error to the custom error handling middleware
+  // Try to get from cache first
+  const cachedProduct = await cache.get(`product:${id}`);
+  if (cachedProduct) {
+    return res.status(200).json({
+      status: 'success',
+      data: JSON.parse(cachedProduct),
+      source: 'cache'
+    });
   }
-};
 
-exports.updateProduct = async (req, res, next) => {
+  const product = await Product.findById(id);
+  
+  if (!product) {
+    throw new NotFoundError('Product');
+  }
+
+  // Cache product for 5 minutes
+  await cache.set(`product:${id}`, JSON.stringify(product), 'EX', 300);
+
+  logger.info('Product fetched', { productId: id });
+
+  res.status(200).json({
+    status: 'success',
+    data: product,
+    source: 'database'
+  });
+});
+
+exports.updateProduct = catchAsync(async (req, res) => {
   const { id } = req.params;
-  try {
-    const product = await Product.findByIdAndUpdate(id, req.body, { new: true });
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    res.status(200).json(product);
-  } catch (err) {
-    next(err); // Pass the error to the custom error handling middleware
+  const updateData = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ValidationError('Invalid product ID format');
   }
-};
+
+  // Validation
+  const error = new ValidationError('Product update validation failed');
+  if (updateData.name === '') error.addError('name', 'Product name cannot be empty');
+  if (updateData.price && updateData.price < 0) error.addError('price', 'Price cannot be negative');
+  if (error.validationErrors.length > 0) throw error;
+
+  const product = await Product.findByIdAndUpdate(
+    id,
+    { ...updateData, updatedAt: new Date() },
+    { new: true, runValidators: true }
+  );
+
+  if (!product) {
+    throw new NotFoundError('Product');
+  }
+
+  // Clear caches
+  await Promise.all([
+    cache.del(`product:${id}`),
+    cache.del('products:all')
+  ]);
+
+  logger.info('Product updated', { 
+    productId: id,
+    updates: Object.keys(updateData)
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: product
+  });
+});
+
+exports.deleteProduct = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ValidationError('Invalid product ID format');
+  }
+
+  const product = await Product.findByIdAndDelete(id);
+
+  if (!product) {
+    throw new NotFoundError('Product');
+  }
+
+  // Clear caches
+  await Promise.all([
+    cache.del(`product:${id}`),
+    cache.del('products:all')
+  ]);
+
+  logger.info('Product deleted', { productId: id });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Product deleted successfully'
+  });
+});
 
 

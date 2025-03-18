@@ -1,84 +1,104 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+import PropTypes from 'prop-types';
 import '../styles/Page.css';
 import Controls from './Controls';
 
-import SignIn from '../components/view/Account/SignIn'; // Import SignIn component
-import SignUp from '../components/view/Account/SignUp'; // Correctly import SignUp component
-import Cart from '../components/view/cart/Cart'; // Import Order component
-import Profile from '../components/view/Account/Profile';
-import Product from '../components/Product';
-import Contact from '../components/view/Pages/Contact';
-import Home from '../components/Home';
-import About from '../components/view/Pages/About';
+// Lazy load components
+const SignIn = lazy(() => import('../components/view/Account/SignIn'));
+const SignUp = lazy(() => import('../components/view/Account/SignUp'));
+const Cart = lazy(() => import('../components/view/cart/Cart'));
+const Profile = lazy(() => import('../components/view/Account/Profile'));
+const Product = lazy(() => import('../components/Product'));
+const Contact = lazy(() => import('../components/view/Pages/Contact'));
+const Home = lazy(() => import('../components/Home'));
+const About = lazy(() => import('../components/view/Pages/About'));
 
-// Sign-In Page Component
-const SignInPage = () => {
-  return (
-    <div className="SignIn_page_container">
-      <SignIn />
-    </div>
-  );
-};
+// Loading component
+const LoadingSpinner = () => (
+  <div className="loading-container">
+    <div className="spinner"></div>
+    <p>Loading...</p>
+  </div>
+);
 
-// Sign-Up Page Component
-const SignUpPage = () => {
-  return (
-    <div className="SignUp_page_container">
-      <SignUp />
-    </div>
-  );
-};
+// Base page component
+const PageContainer = ({ className, children }) => (
+  <div className={`page-container ${className}`}>
+    <Suspense fallback={<LoadingSpinner />}>
+      {children}
+    </Suspense>
+  </div>
+);
 
-// Order Page Component
-const CartPage = () => {
-  return (
-    <div className="Order_page_container">
-      <Cart />
-    </div>
-  );
+PageContainer.propTypes = {
+  className: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired
 };
 
-const HomePage = () => {
-  return (
-    <div className="Home_page_container">
-      <Home />
-      <Product />
-    </div>
-  );
-};
+// Page Components
+const SignInPage = () => (
+  <PageContainer className="signin-page-container">
+    <SignIn />
+  </PageContainer>
+);
 
-const ProductPage = () => {
-  return (
-    <div className="Product_page_container">
-      <Product />
-    </div>
-  );
-};
-const ContactPage = () => {
-  return (
-    <div className="Contact_page_container">
-      <Contact />
-    </div>
-  );
-};
-const AboutPage = () => {
-  return (
-    <div className="About_page_container">
-      <About />
-    </div>
-  );
-};
-const ProfilePage = () => {
-  return (
-    <div className="Profile_page_container">
-      <Profile />
-    </div>
-  );
-};
-// Export components wrapped with Controls HOC
-export const SignInComponent = Controls(SignInPage); // Sign-In page wrapped with Controls
-export const SignUpComponent = Controls(SignUpPage); // Sign-Up page wrapped with Controls
-export const CartComponent = Controls(CartPage); // Order page wrapped with Controls
+const SignUpPage = () => (
+  <PageContainer className="signup-page-container">
+    <SignUp />
+  </PageContainer>
+);
+
+const CartPage = () => (
+  <PageContainer className="cart-page-container">
+    <Cart />
+  </PageContainer>
+);
+
+const HomePage = () => (
+  <PageContainer className="home-page-container">
+    <Home />
+    <Product />
+  </PageContainer>
+);
+
+const ProductPage = () => (
+  <PageContainer className="product-page-container">
+    <Product />
+  </PageContainer>
+);
+
+const ContactPage = () => (
+  <PageContainer className="contact-page-container">
+    <Contact />
+  </PageContainer>
+);
+
+const AboutPage = () => (
+  <PageContainer className="about-page-container">
+    <About />
+  </PageContainer>
+);
+
+const ProfilePage = () => (
+  <PageContainer className="profile-page-container">
+    <Profile />
+  </PageContainer>
+);
+
+// Add display names for debugging
+SignInPage.displayName = 'SignInPage';
+SignUpPage.displayName = 'SignUpPage';
+CartPage.displayName = 'CartPage';
+HomePage.displayName = 'HomePage';
+ProductPage.displayName = 'ProductPage';
+ContactPage.displayName = 'ContactPage';
+AboutPage.displayName = 'AboutPage';
+ProfilePage.displayName = 'ProfilePage';
+
+// Export wrapped components
+export const SignInComponent = Controls(SignInPage);
+export const SignUpComponent = Controls(SignUpPage);
+export const CartComponent = Controls(CartPage);
 export const ProfileComponent = Controls(ProfilePage);
 export const AboutComponent = Controls(AboutPage);
 export const HomeComponent = Controls(HomePage);

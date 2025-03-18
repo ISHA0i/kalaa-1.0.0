@@ -9,6 +9,7 @@
   padding: 10px 20px;
   position: fixed;
   top: 0;
+  height: 55px;
   width: 100%;
   z-index: 1000;
   /* Ensures the navbar is on top */
