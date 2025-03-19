@@ -5,9 +5,14 @@ const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { logger } = require('../utils/logger');
 const User = require('../models/UserModel');
-const { registerUser } = require('../controller/AuthController');
+const { registerUser } = require('../controllers/AuthController');
 const { validateUserData } = require('../utils/validation');
-
+// const {AppError,
+//   ValidationError,
+//   AuthenticationError,
+//   AuthorizationError,
+//   NotFoundError,
+//   DatabaseError}=require('../errors/AppError');
 const router = express.Router();
 
 // Rate limiting
@@ -155,3 +160,32 @@ router.post('/logout', (req, res) => {
 });
 
 module.exports = router;
+
+// filepath: d:\git clone\kalaa-1.0.0\BACKEND\controller\AuthController.js
+const bcrypt = require('bcryptjs');
+const User = require('../models/UserModel');
+const { logger } = require('../utils/logger');
+
+module.exports.registerUser = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create a new user
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    await user.save();
+    logger.info('User registered successfully', { userId: user._id });
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    logger.error('Error registering user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

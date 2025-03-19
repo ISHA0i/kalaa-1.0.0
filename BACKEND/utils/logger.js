@@ -1,9 +1,16 @@
-// Simple console-based logger
-const logger = {
-  info: (...args) => console.log(new Date().toISOString(), 'INFO:', ...args),
-  warn: (...args) => console.warn(new Date().toISOString(), 'WARN:', ...args),
-  error: (...args) => console.error(new Date().toISOString(), 'ERROR:', ...args),
-  debug: (...args) => console.debug(new Date().toISOString(), 'DEBUG:', ...args)
-};
+const { createLogger, format, transports } = require('winston');
 
-module.exports = { logger }; 
+const logger = createLogger({
+  level: 'info',
+  format: format.combine(
+    format.timestamp(),
+    format.json()
+  ),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new transports.File({ filename: 'logs/combined.log' })
+  ]
+});
+
+module.exports = { logger };

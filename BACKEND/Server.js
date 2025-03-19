@@ -12,9 +12,8 @@ const productRoutes = require('./routes/ProductRoutes');
 const authRoutes = require('./routes/AuthRoutes');
 const userRoutes = require('./routes/UserRoutes');
 const cartRoutes = require('./routes/CartRoutes');
-const errorHandler = require('./errors/servererror');
 const { catchAsync } = require('./errors/servererror');
-const { ValidationError, NotFoundError } = require('./errors/AppError');
+// const { ValidationError, NotFoundError } = require('./errors/AppError');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -77,12 +76,11 @@ app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/cart`, cartRoutes);
 
 // Handle 404
-app.use((req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: 'Route not found'
-  });
-});
+const { notFoundHandler, errorHandler } = require('./errors/servererror');
+app.use(notFoundHandler);
+
+// Centralized error handler
+app.use(errorHandler);
 
 // Simplified error handler
 app.use((err, req, res, next) => {

@@ -1,10 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { validationResult } = require('express-validator');
+// const { validationResult } = require('express-validator');
 const User = require('../models/UserModel');
 const { logger } = require('../utils/logger');
 const { ValidationError, AuthenticationError, DatabaseError } = require('../errors/AppError');
 const { catchAsync } = require('../errors/servererror');
+const nodemailer = require('nodemailer');
 
 exports.registerUser = catchAsync(async (req, res) => {
   const { name, email, password } = req.body;
@@ -122,6 +123,24 @@ exports.forgotPassword = catchAsync(async (req, res) => {
   // Generate reset token
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
+
+  // Send email
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD
+    }
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'Password Reset',
+    text: `Your password reset token is: ${resetToken}`
+  };
+
+  await transporter.sendMail(mailOptions);
 
   logger.info('Password reset requested', { userId: user._id, email });
 

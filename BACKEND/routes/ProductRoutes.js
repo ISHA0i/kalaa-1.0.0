@@ -1,4 +1,3 @@
-// filepath: d:\git clone\kalaa-1.0.0\BACKEND\routes\ProductRoutes.js
 const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../middleware/auth');
@@ -6,6 +5,8 @@ const { validateProductData } = require('../utils/validation');
 const { logger } = require('../utils/logger');
 const cacheService = require('../utils/cache');
 const Product = require('../models/ProductModel');
+const someController = require('../controllers/someController'); // Corrected path
+const productController = require('../controllers/ProductController'); // Ensure this file exists and has 'addProduct'
 
 // Cache configuration
 const CACHE_DURATION = 3600; // 1 hour
@@ -140,6 +141,9 @@ router.post('/', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+router.post('/some-endpoint', someController.someFunction); // Ensure 'someFunction' is defined in someController.js
+router.post('/add-product', productController.addProduct); // Ensure 'addProduct' is defined in ProductController.js
 
 router.put('/:id', verifyToken, async (req, res) => {
   try {

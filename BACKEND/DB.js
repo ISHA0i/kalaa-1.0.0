@@ -16,6 +16,9 @@ const mongoOptions = {
   retryWrites: true
 };
 
+let retryCount = 0;
+const MAX_RETRIES = 5;
+
 const connectToMongo = async () => {
   try {
     // Handle initial connection errors
@@ -58,12 +61,12 @@ const connectToMongo = async () => {
 
   } catch (err) {
     console.error('Failed to connect to MongoDB:', err);
-    // Implement retry logic
-    if (err.name === 'MongooseServerSelectionError') {
-      console.log('Retrying connection in 5 seconds...');
+    if (err.name === 'MongooseServerSelectionError' && retryCount < MAX_RETRIES) {
+      retryCount++;
+      console.log(`Retrying connection (${retryCount}/${MAX_RETRIES}) in 5 seconds...`);
       setTimeout(connectToMongo, 5000);
     } else {
-      process.exit(1); // Exit on other errors
+      process.exit(1); // Exit on other errors or if retry limit is reached
     }
   }
 };
