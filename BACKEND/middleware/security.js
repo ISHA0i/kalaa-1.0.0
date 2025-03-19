@@ -1,9 +1,8 @@
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const compression = require('compression');
-const csrf = require('csurf');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+const { body, validationResult } = require('express-validator');
 
 // Rate limiting
 const limiter = rateLimit({
@@ -25,7 +24,19 @@ const apiLimiter = rateLimit({
 // Apply security middleware
 const configureSecurityMiddleware = (app) => {
   // Basic security headers
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+    xssFilter: true,
+    noSniff: true,
+    referrerPolicy: { policy: 'same-origin' }
+  }));
   
   // Rate limiting
   app.use('/api/', apiLimiter);
@@ -33,27 +44,37 @@ const configureSecurityMiddleware = (app) => {
   // Data sanitization against NoSQL query injection
   app.use(mongoSanitize());
   
-  // Data sanitization against XSS
-  app.use(xss());
-  
-  // Enable CSRF protection
-  app.use(csrf({ cookie: true }));
-  
   // Compression
   app.use(compression());
   
-  // Error handler for CSRF token errors
-  app.use(function (err, req, res, next) {
-    if (err.code !== 'EBADCSRFTOKEN') return next(err);
-    res.status(403).json({
-      status: 'error',
-      message: 'Invalid CSRF token'
-    });
+  // Additional security headers
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
   });
+};
+
+// Validation middleware for user input
+const validateUserInput = [
+  body('email').isEmail().withMessage('Please enter a valid email address.'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long.'),
+];
+
+// Middleware to handle validation results
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
 };
 
 module.exports = {
   configureSecurityMiddleware,
   limiter,
-  apiLimiter
+  apiLimiter,
+  validateUserInput,
+  handleValidationErrors
 }; 

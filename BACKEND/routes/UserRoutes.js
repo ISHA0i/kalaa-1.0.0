@@ -2,14 +2,15 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const User = require('../models/UserModel');
-const authMiddleware = require('../middleware/authMiddleware');
+const auth = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { validateUserData } = require('../utils/validation');
+const { validateUserInput, handleValidationErrors } = require('../middleware/security');
 
 const router = express.Router();
 
 // Get user profile
-router.get('/profile', authMiddleware, async (req, res) => {
+router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .select('-password -__v')
@@ -30,20 +31,9 @@ router.get('/profile', authMiddleware, async (req, res) => {
 
 // Update user profile
 router.put('/profile',
-  authMiddleware,
-  [
-    body('name').optional().trim()
-      .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters'),
-    body('email').optional().isEmail().normalizeEmail()
-      .withMessage('Enter a valid email'),
-    body('currentPassword').optional().notEmpty()
-      .withMessage('Current password is required to update password'),
-    body('newPassword').optional()
-      .isLength({ min: 8 })
-      .withMessage('New password must be at least 8 characters long')
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-      .withMessage('Password must contain uppercase, lowercase, number and special character')
-  ],
+  auth,
+  validateUserInput,
+  handleValidationErrors,
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -105,7 +95,7 @@ router.put('/profile',
 );
 
 // Delete user account
-router.delete('/profile', authMiddleware, async (req, res) => {
+router.delete('/profile', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {

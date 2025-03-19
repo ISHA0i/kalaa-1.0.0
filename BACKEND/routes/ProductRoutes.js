@@ -1,7 +1,7 @@
 // filepath: d:\git clone\kalaa-1.0.0\BACKEND\routes\ProductRoutes.js
 const express = require('express');
 const router = express.Router();
-const { verifyToken, isAdmin } = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
 const { validateProductData } = require('../utils/validation');
 const { logger } = require('../utils/logger');
 const cacheService = require('../utils/cache');
@@ -115,7 +115,7 @@ router.get('/:id', cacheService.cache({
 });
 
 // Protected routes (Admin only)
-router.post('/', verifyToken, isAdmin, async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const validation = validateProductData(req.body);
     if (!validation.isValid) {
@@ -141,7 +141,7 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id', verifyToken, isAdmin, async (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
   try {
     const validation = validateProductData(req.body);
     if (!validation.isValid) {
@@ -178,7 +178,7 @@ router.put('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {

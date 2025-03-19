@@ -1,11 +1,8 @@
 import React from 'react';
+// import { Link } from 'react-router-dom';
 import '../../../styles/Page.css';
 
 const About = () => {
-  const handleSocialClick = (url) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
   const socialLinks = [
     {
       name: 'LinkedIn',
@@ -66,15 +63,15 @@ const About = () => {
               </p>
               <ul className="list-unstyled">
                 <li className="mb-3">
-                  <i className="bi bi-check-circle-fill text-primary me-2" aria-hidden="true"></i>
+                  <i className="bi bi-check-circle-fill text-primary me-2"></i>
                   Supporting local artists and traditional art forms
                 </li>
                 <li className="mb-3">
-                  <i className="bi bi-check-circle-fill text-primary me-2" aria-hidden="true"></i>
+                  <i className="bi bi-check-circle-fill text-primary me-2"></i>
                   Providing a platform for artists to showcase their work
                 </li>
                 <li className="mb-3">
-                  <i className="bi bi-check-circle-fill text-primary me-2" aria-hidden="true"></i>
+                  <i className="bi bi-check-circle-fill text-primary me-2"></i>
                   Making authentic art accessible to art lovers worldwide
                 </li>
               </ul>
@@ -91,7 +88,7 @@ const About = () => {
             <div className="col-md-4">
               <div className="card h-100 border-0 shadow-sm">
                 <div className="card-body text-center">
-                  <i className="bi bi-heart-fill text-primary display-4 mb-3" aria-hidden="true"></i>
+                  <i className="bi bi-heart-fill text-primary display-4 mb-3"></i>
                   <h3 className="card-title h4">Authenticity</h3>
                   <p className="card-text">
                     We ensure every artwork is authentic and original, preserving the
@@ -103,7 +100,7 @@ const About = () => {
             <div className="col-md-4">
               <div className="card h-100 border-0 shadow-sm">
                 <div className="card-body text-center">
-                  <i className="bi bi-people-fill text-primary display-4 mb-3" aria-hidden="true"></i>
+                  <i className="bi bi-people-fill text-primary display-4 mb-3"></i>
                   <h3 className="card-title h4">Community</h3>
                   <p className="card-text">
                     We foster a supportive community of artists and art lovers,
@@ -115,7 +112,7 @@ const About = () => {
             <div className="col-md-4">
               <div className="card h-100 border-0 shadow-sm">
                 <div className="card-body text-center">
-                  <i className="bi bi-shield-fill-check text-primary display-4 mb-3" aria-hidden="true"></i>
+                  <i className="bi bi-shield-fill-check text-primary display-4 mb-3"></i>
                   <h3 className="card-title h4">Quality</h3>
                   <p className="card-text">
                     We maintain high standards in artwork curation, packaging, and
@@ -133,27 +130,26 @@ const About = () => {
         <div className="container">
           <h2 className="text-center mb-5">Our Team</h2>
           <div className="row g-4">
-            {teamMembers.map((member) => (
-              <div key={member.id} className="col-md-4">
+            {[1, 2, 3].map((member) => (
+              <div key={member} className="col-md-4">
                 <div className="card border-0 shadow-sm">
                   <img
-                    src={member.image}
+                    src={`/images/team-${member}.jpg`}
                     className="card-img-top"
-                    alt={member.name}
+                    alt={`Team Member ${member}`}
                   />
                   <div className="card-body text-center">
-                    <h3 className="card-title h5">{member.name}</h3>
-                    <p className="card-text text-muted">{member.position}</p>
+                    <h3 className="card-title h5">Team Member {member}</h3>
+                    <p className="card-text text-muted">Position</p>
                     <div className="social-links mt-3">
                       {socialLinks.map((social, index) => (
                         <button
                           key={social.name}
-                          type="button"
-                          onClick={() => handleSocialClick(social.url)}
+                          onClick={() => window.open(social.url, '_blank', 'noopener,noreferrer')}
                           className={`btn btn-link text-muted ${index !== socialLinks.length - 1 ? 'me-3' : ''}`}
-                          aria-label={`${member.name}'s ${social.name}`}
+                          aria-label={social.name}
                         >
-                          <i className={`bi ${social.icon}`} aria-hidden="true"></i>
+                          <i className={`bi ${social.icon}`}></i>
                         </button>
                       ))}
                     </div>

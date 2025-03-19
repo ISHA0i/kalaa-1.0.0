@@ -5,7 +5,7 @@
   "main": "Server.js",
   "scripts": {
     "start": "node Server.js",
-    "dev": "nodemon Server.js",
+    "dev": "nodemon Server.js --ignore 'node_modules/'",
     "test": "jest"
   },
   "keywords": [],
@@ -17,23 +17,18 @@
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "csurf": "^1.11.0",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^6.7.0",
+    "express-validator": "^7.2.1",
     "helmet": "^6.0.1",
-    "ioredis": "^5.3.1",
     "jsonwebtoken": "^9.0.0",
     "kalaa-backend": "file:",
     "mongoose": "^7.0.3",
-    "multer": "^1.4.5-lts.1",
-    "winston": "^3.8.2",
-    "xss-clean": "^0.1.1"
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
-    "jest": "^29.5.0",
-    "nodemon": "^2.0.22",
-    "supertest": "^6.3.3"
+    "nodemon": "^2.0.22"
   }
 }

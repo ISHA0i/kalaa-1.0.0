@@ -42,14 +42,8 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
-// Helper function to validate origins
-const isOriginAllowed = (origin) => {
-  return !origin || allowedOrigins.includes(origin);
-};
-
 // Export configuration
 module.exports = {
   corsOptions,
-  allowedOrigins,
-  isOriginAllowed
+  allowedOrigins
 }; 

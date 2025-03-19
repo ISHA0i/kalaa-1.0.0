@@ -8,9 +8,8 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const connectToMongo = require('./DB');
 const { configureSecurityMiddleware } = require('./middleware/security');
-const { requestLogger, errorLogger } = require('./utils/logger');
 const productRoutes = require('./routes/ProductRoutes');
-const authRoutes = require('./routes/AuthRoutes'); // Import AuthRoutes
+const authRoutes = require('./routes/AuthRoutes');
 const userRoutes = require('./routes/UserRoutes');
 const cartRoutes = require('./routes/CartRoutes');
 const errorHandler = require('./errors/servererror');
@@ -22,8 +21,8 @@ const PORT = process.env.PORT || 5001;
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: 'Too many requests from this IP, please try again later.'
 });
 
@@ -31,29 +30,30 @@ const limiter = rateLimit({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
-app.use(compression()); // Compress all routes
-app.use(helmet()); // Security headers
-app.use(mongoSanitize()); // Prevent NoSQL injection
-app.use(limiter); // Apply rate limiting
+app.use(compression());
+app.use(helmet());
+app.use(mongoSanitize());
+app.use(limiter);
 
 // CORS Configuration
 const corsOptions = {
   origin: process.env.FRONTEND_URL || 'http://localhost:3001',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  exposedHeaders: ['X-CSRF-Token'],
-  maxAge: 600 // Cache preflight requests for 10 minutes
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 600
 };
 app.use(cors(corsOptions));
 
 // Configure security middleware
 configureSecurityMiddleware(app);
 
-// Request logging
-app.use(requestLogger);
+// Simple request logger
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
 
-// Trust proxy if behind a reverse proxy
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
@@ -63,8 +63,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage()
+    uptime: process.uptime()
   });
 });
 
@@ -73,29 +72,9 @@ const API_PREFIX = '/api';
 
 // Routes
 app.use(`${API_PREFIX}/products`, productRoutes);
-app.use(`${API_PREFIX}/auth`, authRoutes); // Register AuthRoutes under /api/auth
+app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/cart`, cartRoutes);
-
-// Example route handler
-const createUser = catchAsync(async (req, res) => {
-  const { email, password } = req.body;
-  
-  // Validation example
-  const error = new ValidationError('Invalid input');
-  if (!email) error.addError('email', 'Email is required');
-  if (!password) error.addError('password', 'Password is required');
-  if (error.validationErrors.length > 0) throw error;
-
-  // Create user...
-});
-
-// Example of not found error
-const getUser = catchAsync(async (req, res) => {
-  const user = await User.findById(req.params.id);
-  if (!user) throw new NotFoundError('User');
-  res.json(user);
-});
 
 // Handle 404
 app.use((req, res) => {
@@ -105,11 +84,19 @@ app.use((req, res) => {
   });
 });
 
-// Error logging
-app.use(errorLogger);
-
-// Error Handling Middleware
-app.use(errorHandler);
+// Simplified error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  
+  const statusCode = err.statusCode || 500;
+  const status = err.status || 'error';
+  
+  res.status(statusCode).json({
+    status,
+    message: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 
 // Connect to MongoDB and Start Server
 const startServer = async () => {
@@ -122,19 +109,11 @@ const startServer = async () => {
     // Graceful shutdown
     const shutdown = async () => {
       console.log('Received shutdown signal. Closing server...');
-      server.close(async () => {
+      server.close(() => {
         console.log('Server closed.');
-        try {
-          await mongoose.connection.close();
-          console.log('Database connection closed.');
-          process.exit(0);
-        } catch (err) {
-          console.error('Error closing database connection:', err);
-          process.exit(1);
-        }
+        process.exit(0);
       });
 
-      // Force close if graceful shutdown fails
       setTimeout(() => {
         console.error('Could not close connections in time, forcefully shutting down');
         process.exit(1);
