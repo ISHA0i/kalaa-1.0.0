@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 // const { validationResult } = require('express-validator');
 const User = require('../models/UserModel');
 const { logger } = require('../utils/logger');
-const { ValidationError, AuthenticationError, DatabaseError } = require('../errors/AppError');
+const { ValidationError, AuthenticationError } = require('../errors/AppError');
 const { catchAsync } = require('../errors/servererror');
 const nodemailer = require('nodemailer');
 
@@ -149,3 +149,7 @@ exports.forgotPassword = catchAsync(async (req, res) => {
     message: 'Password reset token sent to email'
   });
 });
+
+
+logger.info('New user registered', { userId: user._id, email });
+logger.error('Error registering user:', error);

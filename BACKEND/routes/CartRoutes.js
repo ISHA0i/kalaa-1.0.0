@@ -263,3 +263,6 @@ router.delete('/clear', verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+
+logger.info('New user registered', { userId: user._id, email });
+logger.error('Error registering user:', error);

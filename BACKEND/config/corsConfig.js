@@ -47,3 +47,6 @@ module.exports = {
   corsOptions,
   allowedOrigins
 }; 
+
+logger.info('New user registered', { userId: user._id, email });
+logger.error('Error registering user:', error);

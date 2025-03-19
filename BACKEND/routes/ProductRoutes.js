@@ -5,7 +5,6 @@ const { validateProductData } = require('../utils/validation');
 const { logger } = require('../utils/logger');
 const cacheService = require('../utils/cache');
 const Product = require('../models/ProductModel');
-const someController = require('../controllers/someController'); // Corrected path
 const productController = require('../controllers/ProductController'); // Ensure this file exists and has 'addProduct'
 
 // Cache configuration
@@ -142,7 +141,6 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-router.post('/some-endpoint', someController.someFunction); // Ensure 'someFunction' is defined in someController.js
 router.post('/add-product', productController.addProduct); // Ensure 'addProduct' is defined in ProductController.js
 
 router.put('/:id', verifyToken, async (req, res) => {

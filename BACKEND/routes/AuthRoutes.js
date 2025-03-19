@@ -19,13 +19,13 @@ const router = express.Router();
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 attempts
-  message: { message: 'Too many login attempts. Please try again later.' }
+  message: { message: 'Too many login attempts. Please try again later.' },
 });
 
 const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3, // 3 attempts
-  message: { message: 'Too many signup attempts. Please try again later.' }
+  message: { message: 'Too many signup attempts. Please try again later.' },
 });
 
 // Login Route
@@ -62,14 +62,14 @@ router.post(
 
       // Generate JWT
       const token = jwt.sign(
-        { 
+        {
           id: user._id,
-          role: user.role 
-        }, 
-        process.env.JWT_SECRET, 
-        { 
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        {
           expiresIn: '1h',
-          algorithm: 'HS256'
+          algorithm: 'HS256',
         }
       );
 
@@ -78,18 +78,18 @@ router.post(
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 3600000 // 1 hour
+        maxAge: 3600000, // 1 hour
       });
 
       logger.info('User logged in successfully', { userId: user._id });
-      res.status(200).json({ 
+      res.status(200).json({
         message: 'Login successful',
         user: {
           id: user._id,
           name: user.name,
           email: user.email,
-          role: user.role
-        }
+          role: user.role,
+        },
       });
     } catch (error) {
       logger.error('Login error:', error);
@@ -103,14 +103,22 @@ router.post(
   '/signup',
   signupLimiter,
   [
-    body('name').trim().notEmpty().withMessage('Name is required')
-      .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters'),
+    body('name')
+      .trim()
+      .notEmpty()
+      .withMessage('Name is required')
+      .isLength({ min: 2, max: 50 })
+      .withMessage('Name must be between 2 and 50 characters'),
     body('email').isEmail().normalizeEmail().withMessage('Enter a valid email'),
     body('password')
       .isLength({ min: 8 })
       .withMessage('Password must be at least 8 characters long')
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-      .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
+      )
+      .withMessage(
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      ),
   ],
   async (req, res) => {
     try {
@@ -123,14 +131,18 @@ router.post(
       // Additional validation using validateUserData
       const validation = validateUserData(req.body);
       if (!validation.isValid) {
-        logger.warn('User data validation failed', { errors: validation.errors });
+        logger.warn('User data validation failed', {
+          errors: validation.errors,
+        });
         return res.status(400).json({ errors: validation.errors });
       }
 
       // Check if email already exists
       const existingUser = await User.findOne({ email: req.body.email });
       if (existingUser) {
-        logger.warn('Signup attempt with existing email', { email: req.body.email });
+        logger.warn('Signup attempt with existing email', {
+          email: req.body.email,
+        });
         return res.status(400).json({ message: 'Email already registered' });
       }
 
@@ -148,9 +160,9 @@ router.post('/logout', (req, res) => {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
-    
+
     logger.info('User logged out successfully');
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
@@ -178,7 +190,7 @@ module.exports.registerUser = async (req, res) => {
     const user = new User({
       name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
     await user.save();
@@ -189,3 +201,5 @@ module.exports.registerUser = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+logger.info('New user registered', { userId: user._id, email });
+logger.error('Error registering user:', error);

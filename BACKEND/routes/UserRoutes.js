@@ -1,10 +1,10 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const {  validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const User = require('../models/UserModel');
 const auth = require('../middleware/auth');
 const { logger } = require('../utils/logger');
-const { validateUserData } = require('../utils/validation');
+// const { validateUserData } = require('../utils/validation');
 const { validateUserInput, handleValidationErrors } = require('../middleware/security');
 
 const router = express.Router();
@@ -115,3 +115,6 @@ router.delete('/profile', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+logger.info('New user registered', { userId: user._id, email });
+logger.error('Error registering user:', error);

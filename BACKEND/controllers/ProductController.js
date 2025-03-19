@@ -1,7 +1,7 @@
 const { Product } = require('../models/ProductModel');
 const mongoose = require('mongoose');
 const { logger } = require('../utils/logger');
-const { ValidationError, NotFoundError, DatabaseError } = require('../errors/AppError');
+const { ValidationError, NotFoundError } = require('../errors/AppError');
 const { catchAsync } = require('../errors/servererror');
 const cache = require('../utils/cache');
 
@@ -201,5 +201,18 @@ exports.deleteProduct = catchAsync(async (req, res) => {
     message: 'Product deleted successfully'
   });
 });
+
+exports.addProduct = async (req, res) => {
+  try {
+    const product = new Product(req.body);
+    await product.save();
+    logger.info('Product added successfully', { productId: product._id });
+    res.status(201).json({ message: 'Product added successfully', product });
+  } catch (error) {
+    logger.error('Error adding product:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 

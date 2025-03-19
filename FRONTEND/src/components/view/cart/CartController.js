@@ -14,32 +14,73 @@ class CartError extends Error {
 
 export const fetchCartItems = async (setCartItems, setSuggestedProducts, navigate) => {
   const token = localStorage.getItem('token');
-  if (!token) {
-    toast.error('Please log in to access your cart');
-    navigate('/signin');
-    return;
-  }
 
   try {
+    // Check if the backend is reachable
+    const healthCheckResponse = await api.get('/health');
+    if (!healthCheckResponse.data || healthCheckResponse.status !== 200) {
+      throw new Error('Backend is unavailable');
+    }
+
+    // If backend is reachable, enforce login
+    if (!token) {
+      toast.error('Please log in to access your cart');
+      navigate('/signin');
+      return;
+    }
+
+    // Fetch cart items from the backend
     const response = await api.get('/cart');
-    if (!response.data) throw new CartError('Invalid response from server', 'INVALID_RESPONSE');
+    if (!response.data) throw new Error('Invalid response from server');
 
     const updatedCart = response.data.items?.map(item => ({
       ...item,
-      quantity: validateQuantity(item.quantity) ? item.quantity : 1
+      quantity: item.quantity > 0 ? item.quantity : 1
     })) || [];
 
     setCartItems(updatedCart);
-    await fetchSuggestedProducts(updatedCart, setSuggestedProducts);
   } catch (error) {
     console.error('Error fetching cart items:', error);
-    if (error.response?.status === 401) {
-      toast.error('Session expired. Please log in again');
-      navigate('/signin');
-    } else {
-      toast.error(error.message || 'Failed to fetch cart items');
+
+    // Fallback: Allow viewing cart without login if backend is unavailable
+    if (!token) {
+      toast.warn('Backend is unavailable. Viewing fallback cart items.');
     }
-    throw error;
+
+    const fallbackCartItems = [
+      {
+        product: {
+          _id: '1',
+          name: 'Handmade Painting',
+          price: 49.99,
+          image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ6czBCdEXZnTFS5lhsUpGKrnjD53ajML6BrQ&s',
+          category: 'Art'
+        },
+        quantity: 2
+      },
+      {
+        product: {
+          _id: '2',
+          name: 'Digital Artwork',
+          price: 29.99,
+          image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqIKJvid0P8UOaiJrFNqbvEXxq66621HA-DA&s',
+          category: 'Digital'
+        },
+        quantity: 1
+      },
+      {
+        product: {
+          _id: '3',
+          name: 'Sculpture',
+          price: 99.99,
+          image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcxANkTJxu07KiU2s5vsh70Jl-u7uJrdvoyA&s',
+          category: 'Decor'
+        },
+        quantity: 1
+      }
+    ];
+
+    setCartItems(fallbackCartItems);
   }
 };
 
@@ -216,7 +257,7 @@ export const validateQuantity = (quantity) => {
 export const formatPrice = (price) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'INR',
+    currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(price || 0);

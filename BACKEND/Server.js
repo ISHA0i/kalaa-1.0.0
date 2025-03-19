@@ -13,11 +13,12 @@ const authRoutes = require('./routes/AuthRoutes');
 const userRoutes = require('./routes/UserRoutes');
 const cartRoutes = require('./routes/CartRoutes');
 const { catchAsync } = require('./errors/servererror');
+const nodemailer = require('nodemailer');
 // const { ValidationError, NotFoundError } = require('./errors/AppError');
 
 const app = express();
-const PORT = process.env.PORT || 5001;
-
+const PORT = 5001;
+const BASE_URL = `http://localhost:${PORT}`;
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -76,7 +77,7 @@ app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/cart`, cartRoutes);
 
 // Handle 404
-const { notFoundHandler, errorHandler } = require('./errors/servererror');
+const { errorHandler, notFoundHandler } = require('./errors/servererror');
 app.use(notFoundHandler);
 
 // Centralized error handler
@@ -141,3 +142,11 @@ process.on('unhandledRejection', (err) => {
 
 // Start the server
 startServer();
+
+const transporter = nodemailer.createTransport({
+  service: 'Gmail',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD
+  }
+});

@@ -1,7 +1,9 @@
 import React from 'react';
 // import { Link } from 'react-router-dom';
 import '../../../styles/Page.css';
-
+import Isha from '../../Photo/Isha.jpg';
+import Tanvi from '../../Photo/Tanvi.jpg';
+import missionImage from '../../../Assetes/images/backg.webp';
 const About = () => {
   const socialLinks = [
     {
@@ -21,13 +23,13 @@ const About = () => {
       id: 1,
       name: 'Isha Chovatiya',
       position: 'Founder & CEO & Art Director',
-      image: '/images/team-1.jpg'
+      image: Isha
     },
     {
       id: 2,
       name: 'Tanvi Khokhariya',
       position: 'Founder & Head of Operations',
-      image: '/images/team-2.jpg'
+      image: Tanvi
     }
   ];
 
@@ -49,7 +51,7 @@ const About = () => {
           <div className="row align-items-center">
             <div className="col-lg-6 mb-4 mb-lg-0">
               <img
-                src="/images/about-mission.jpg"
+                src={missionImage}
                 alt="Our Mission"
                 className="img-fluid rounded shadow"
               />
@@ -130,17 +132,25 @@ const About = () => {
         <div className="container">
           <h2 className="text-center mb-5">Our Team</h2>
           <div className="row g-4">
-            {[1, 2, 3].map((member) => (
-              <div key={member} className="col-md-4">
+            {teamMembers.map((member) => (
+              <div key={member.id} className="col-md-4">
                 <div className="card border-0 shadow-sm">
                   <img
-                    src={`/images/team-${member}.jpg`}
+                    src={member.image}
                     className="card-img-top"
-                    alt={`Team Member ${member}`}
+                    alt={member.name}
+                    style={{
+                      borderRadius: '50%', // Makes the image circular
+                      width: '150px', // Sets a consistent width
+                      height: '150px', // Sets a consistent height
+                      objectFit: 'cover', // Ensures the image fits within the dimensions
+                      margin: '30px auto', // Centers the image horizontally
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' // Adds a subtle shadow
+                    }}
                   />
                   <div className="card-body text-center">
-                    <h3 className="card-title h5">Team Member {member}</h3>
-                    <p className="card-text text-muted">Position</p>
+                    <h3 className="card-title h5">{member.name}</h3>
+                    <p className="card-text text-muted">{member.position}</p>
                     <div className="social-links mt-3">
                       {socialLinks.map((social, index) => (
                         <button

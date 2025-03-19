@@ -115,7 +115,7 @@ body {
 
 /* Artist Cards */
 .artist-card {
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
 }
 
@@ -167,7 +167,7 @@ body {
   }
 
   .artist-card img {
-    width: 120px;
-    height: 120px;
+    width: 150px;
+    height: 150px;
   }
 }
