@@ -8,7 +8,7 @@
     "@fortawesome/fontawesome-free": "^6.x.x"
   },
   "scripts": {
-    "start": "cross-env PORT=3001 react-scripts start && echo Frontend running on port %PORT%",
+    "start": "react-scripts start --host 192.168.1.100 --port 3001",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
