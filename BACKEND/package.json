@@ -1,16 +1,16 @@
 {
   "name": "kalaa-backend",
   "version": "1.0.0",
-  "description": "Backend for Kalaa e-commerce platform",
-  "main": "Server.js",
+  "description": "Backend for Kalaa Art Gallery e-commerce platform",
+  "main": "index.js",
   "scripts": {
-    "start": "node Server.js",
-    "dev": "nodemon Server.js --ignore 'node_modules/'",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "jest"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Kalaa Team",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.0",
     "kalaa-backend": "file:",
     "mongoose": "^7.0.3",
+    "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.1"
   },

@@ -26,7 +26,7 @@ const Navbar = ({ mode = 'light' }) => {
     const updateCartCount = async () => {
       try {
         // Check if the backend is reachable
-        const healthCheckResponse = await fetch('http://localhost:5001/health');
+        const healthCheckResponse = await fetch('http://localhost:5002/health');
         if (!healthCheckResponse.ok) {
           throw new Error('Backend is unavailable');
         }

@@ -1,228 +1,304 @@
 const Product = require('../models/ProductModel');
-const mongoose = require('mongoose');
-const { logger } = require('../utils/logger');
-const { ValidationError, NotFoundError } = require('../errors/AppError');
-const { catchAsync } = require('../errors/servererror');
-const cache = require('../utils/cache');
 
-exports.createProduct = catchAsync(async (req, res) => {
-  const { description, images, productId, name, price } = req.body;
-
-  // Validation
-  const error = new ValidationError('Product validation failed');
-  if (!name) error.addError('name', 'Product name is required');
-  if (!price) error.addError('price', 'Product price is required');
-  if (!description) error.addError('description', 'Product description is required');
-  if (!productId) error.addError('productId', 'Product ID is required');
-  if (error.validationErrors.length > 0) throw error;
-
-  const product = new Product({ 
-    description, 
-    images, 
-    productId, 
-    name, 
-    price,
-    createdAt: new Date()
-  });
-
-  const savedProduct = await product.save();
-  
-  // Clear products cache
-  await cache.del('products:all');
-  
-  logger.info('Product created', { 
-    productId: savedProduct._id, 
-    name: savedProduct.name 
-  });
-
-  res.status(201).json({
-    status: 'success',
-    data: savedProduct
-  });
-});
-
-exports.fetchAllProducts = catchAsync(async (req, res) => {
-  // Try to get from cache first
-  const cachedProducts = await cache.get('products:all');
-  if (cachedProducts) {
-    return res.status(200).json({
-      status: 'success',
-      data: JSON.parse(cachedProducts),
-      source: 'cache'
-    });
-  }
-
-  // Query parameters for filtering and pagination
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-  const skip = (page - 1) * limit;
-
-  // Build query
-  const query = {};
-  if (req.query.name) {
-    query.name = { $regex: req.query.name, $options: 'i' };
-  }
-  if (req.query.minPrice) {
-    query.price = { $gte: parseFloat(req.query.minPrice) };
-  }
-  if (req.query.maxPrice) {
-    query.price = { ...query.price, $lte: parseFloat(req.query.maxPrice) };
-  }
-
-  // Execute query with pagination
-  const products = await Product.find(query)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const total = await Product.countDocuments(query);
-
-  // Cache results for 5 minutes
-  await cache.set('products:all', JSON.stringify(products), 'EX', 300);
-
-  logger.info('Products fetched', { 
-    count: products.length,
-    page,
-    limit
-  });
-
-  res.status(200).json({
-    status: 'success',
-    data: products,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
-    },
-    source: 'database'
-  });
-});
-
-exports.fetchProductById = catchAsync(async (req, res) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ValidationError('Invalid product ID format');
-  }
-
-  // Try to get from cache first
-  const cachedProduct = await cache.get(`product:${id}`);
-  if (cachedProduct) {
-    return res.status(200).json({
-      status: 'success',
-      data: JSON.parse(cachedProduct),
-      source: 'cache'
-    });
-  }
-
-  const product = await Product.findById(id);
-  
-  if (!product) {
-    throw new NotFoundError('Product');
-  }
-
-  // Cache product for 5 minutes
-  await cache.set(`product:${id}`, JSON.stringify(product), 'EX', 300);
-
-  logger.info('Product fetched', { productId: id });
-
-  res.status(200).json({
-    status: 'success',
-    data: product,
-    source: 'database'
-  });
-});
-
-exports.updateProduct = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const updateData = req.body;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ValidationError('Invalid product ID format');
-  }
-
-  // Validation
-  const error = new ValidationError('Product update validation failed');
-  if (updateData.name === '') error.addError('name', 'Product name cannot be empty');
-  if (updateData.price && updateData.price < 0) error.addError('price', 'Price cannot be negative');
-  if (error.validationErrors.length > 0) throw error;
-
-  const product = await Product.findByIdAndUpdate(
-    id,
-    { ...updateData, updatedAt: new Date() },
-    { new: true, runValidators: true }
-  );
-
-  if (!product) {
-    throw new NotFoundError('Product');
-  }
-
-  // Clear caches
-  await Promise.all([
-    cache.del(`product:${id}`),
-    cache.del('products:all')
-  ]);
-
-  logger.info('Product updated', { 
-    productId: id,
-    updates: Object.keys(updateData)
-  });
-
-  res.status(200).json({
-    status: 'success',
-    data: product
-  });
-});
-
-exports.deleteProduct = catchAsync(async (req, res) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ValidationError('Invalid product ID format');
-  }
-
-  const product = await Product.findByIdAndDelete(id);
-
-  if (!product) {
-    throw new NotFoundError('Product');
-  }
-
-  // Clear caches
-  await Promise.all([
-    cache.del(`product:${id}`),
-    cache.del('products:all')
-  ]);
-
-  logger.info('Product deleted', { productId: id });
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Product deleted successfully'
-  });
-});
-
-exports.addProduct = async (req, res) => {
+// @desc    Get all products
+// @route   GET /api/products
+// @access  Public
+exports.getProducts = async (req, res) => {
   try {
-    // Create a product with default values for required fields that might be missing
-    const productData = {
-      ...req.body,
-      createdBy: req.user ? req.user._id : mongoose.Types.ObjectId('000000000000000000000000'),  // Default if not provided
-      stock: req.body.stock || 0,
-      category: (req.body.category || 'other').toLowerCase(),
-      thumbnail: req.body.thumbnail || req.body.images?.[0]?.url || 'default-thumbnail.jpg'
-    };
-
-    const product = new Product(productData);
-    await product.save();
+    // Build query
+    const query = {};
     
-    logger.info('Product added successfully', { productId: product._id });
-    res.status(201).json({ message: 'Product added successfully', product });
+    // Search functionality
+    if (req.query.search) {
+      query.$text = { $search: req.query.search };
+    }
+
+    // Filter by category
+    if (req.query.category) {
+      query.category = req.query.category.toLowerCase();
+    }
+
+    // Filter by featured
+    if (req.query.featured) {
+      query.featured = req.query.featured === 'true';
+    }
+
+    // Filter by artist (createdBy)
+    if (req.query.artist) {
+      query.createdBy = req.query.artist;
+    }
+
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 9;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const total = await Product.countDocuments(query);
+
+    // Execute query
+    const products = await Product.find(query)
+      .populate('createdBy', 'name profileImage')
+      .skip(startIndex)
+      .limit(limit)
+      .sort(req.query.sort || '-createdAt');
+
+    // Pagination result
+    const pagination = {};
+
+    if (endIndex < total) {
+      pagination.next = {
+        page: page + 1,
+        limit
+      };
+    }
+
+    if (startIndex > 0) {
+      pagination.prev = {
+        page: page - 1,
+        limit
+      };
+    }
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      pagination,
+      totalPages: Math.ceil(total / limit),
+      data: products
+    });
   } catch (error) {
-    logger.error('Error adding product:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.error('Get products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Could not fetch products',
+      error: error.message
+    });
   }
 };
 
+// @desc    Get single product
+// @route   GET /api/products/:id
+// @access  Public
+exports.getProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('createdBy', 'name profileImage bio');
 
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
 
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Get product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Could not fetch product',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Create new product
+// @route   POST /api/products
+// @access  Private (Artist & Admin)
+exports.createProduct = async (req, res) => {
+  try {
+    // Add user to req.body
+    req.body.createdBy = req.user.id;
+
+    // Create product
+    const product = await Product.create(req.body);
+
+    res.status(201).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Could not create product',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update product
+// @route   PUT /api/products/:id
+// @access  Private (Artist & Admin)
+exports.updateProduct = async (req, res) => {
+  try {
+    let product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Make sure user is product owner or admin
+    if (product.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this product'
+      });
+    }
+
+    // Update the updatedAt field
+    req.body.updatedAt = Date.now();
+
+    // Update product
+    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Could not update product',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Delete product
+// @route   DELETE /api/products/:id
+// @access  Private (Artist & Admin)
+exports.deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Make sure user is product owner or admin
+    if (product.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this product'
+      });
+    }
+
+    await product.remove();
+
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Could not delete product',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get featured products
+// @route   GET /api/products/featured
+// @access  Public
+exports.getFeaturedProducts = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 6;
+    
+    const products = await Product.find({ featured: true })
+      .populate('createdBy', 'name profileImage')
+      .limit(limit)
+      .sort('-createdAt');
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      data: products
+    });
+  } catch (error) {
+    console.error('Get featured products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Could not fetch featured products',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Add product rating
+// @route   POST /api/products/:id/ratings
+// @access  Private
+exports.addProductRating = async (req, res) => {
+  try {
+    const { rating, review } = req.body;
+    
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a rating between 1 and 5'
+      });
+    }
+
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Check if user already rated
+    const alreadyRated = product.ratings.find(
+      (r) => r.user.toString() === req.user.id
+    );
+
+    if (alreadyRated) {
+      // Update existing rating
+      product.ratings.forEach((r) => {
+        if (r.user.toString() === req.user.id) {
+          r.rating = rating;
+          r.review = review || r.review;
+          r.date = Date.now();
+        }
+      });
+    } else {
+      // Add new rating
+      product.ratings.push({
+        user: req.user.id,
+        rating,
+        review,
+        date: Date.now()
+      });
+    }
+
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Add product rating error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Could not add product rating',
+      error: error.message
+    });
+  }
+}; 

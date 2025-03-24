@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
 const MAX_RETRIES = 3;
 const TIMEOUT = 10000; // 10 seconds
 
@@ -11,7 +11,7 @@ const validateApiUrl = (url) => {
     return url;
   } catch (error) {
     console.error('Invalid API URL:', error);
-    return 'http://localhost:5001/api';
+    return 'http://localhost:5002/api';
   }
 };
 

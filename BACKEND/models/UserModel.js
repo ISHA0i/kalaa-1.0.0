@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Name is required'],
     trim: true,
-    minlength: [2, 'Name must be at least 2 characters long'],
+    minlength: [2, 'Name must be at least 2 characters'],
     maxlength: [50, 'Name cannot exceed 50 characters']
   },
   email: {
@@ -16,96 +16,115 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     lowercase: true,
-    match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email']
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email address']
   },
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [8, 'Password must be at least 8 characters long']
+    minlength: [6, 'Password must be at least 6 characters'],
+    select: false
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'artist', 'admin'],
     default: 'user'
   },
-  avatar: {
+  isArtist: {
+    type: Boolean,
+    default: false
+  },
+  profileImage: {
     type: String,
-    default: 'default-avatar.png'
+    default: 'default-profile.jpg'
+  },
+  bio: {
+    type: String,
+    maxlength: [500, 'Bio cannot exceed 500 characters']
   },
   createdAt: {
     type: Date,
     default: Date.now
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  },
-  lastLogin: {
-    type: Date
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
   resetPasswordToken: String,
-  resetPasswordExpire: Date
-}, {
-  timestamps: true
+  resetPasswordExpire: Date,
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String,
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  }],
+  cart: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1
+    }
+  }],
+  shippingAddresses: [{
+    address: {
+      type: String,
+      required: true
+    },
+    city: {
+      type: String,
+      required: true
+    },
+    state: String,
+    postalCode: {
+      type: String,
+      required: true
+    },
+    country: {
+      type: String,
+      required: true
+    },
+    isDefault: {
+      type: Boolean,
+      default: false
+    }
+  }]
 });
 
-// Index for email
-userSchema.index({ email: 1 });
-
-// Hash password before saving
+// Encrypt password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  // Only run this function if password was modified
+  if (!this.isModified('password')) return next();
+
+  // Hash the password
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
-// Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+// Match user entered password to hashed password in database
+userSchema.methods.matchPassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Create password reset token
-userSchema.methods.createPasswordResetToken = function() {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-  return resetToken;
+// Generate JWT token
+userSchema.methods.getSignedJwtToken = function() {
+  return jwt.sign(
+    { id: this._id, role: this.role },
+    process.env.JWT_SECRET || 'mysecretkey',
+    {
+      expiresIn: process.env.JWT_EXPIRE || '30d'
+    }
+  );
 };
 
-// Update lastLogin
-userSchema.methods.updateLastLogin = function() {
-  this.lastLogin = Date.now();
-  return this.save();
-};
-
-// Return public profile
-userSchema.methods.toPublicJSON = function() {
-  return {
-    id: this._id,
-    name: this.name,
-    email: this.email,
-    role: this.role,
-    avatar: this.avatar,
-    createdAt: this.createdAt
-  };
-};
+// Virtual for user's full profile URL
+userSchema.virtual('profileUrl').get(function() {
+  return `/users/${this._id}`;
+});
 
 const User = mongoose.model('User', userSchema);
-module.exports = User;
+module.exports = User; 

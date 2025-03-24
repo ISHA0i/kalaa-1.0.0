@@ -30,19 +30,7 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Category is required'],
     lowercase: true,
-    enum: {
-      values: ['electronics', 'clothing', 'books', 'home', 'other'],
-      message: '{VALUE} is not a valid category'
-    }
-  },
-  stock: {
-    type: Number,
-    required: [true, 'Stock quantity is required'],
-    min: [0, 'Stock cannot be negative'],
-    validate: {
-      validator: Number.isInteger,
-      message: 'Stock must be a whole number'
-    }
+    trim: true
   },
   images: [{
     url: {
@@ -51,9 +39,28 @@ const productSchema = new mongoose.Schema({
     },
     alt: String
   }],
-  thumbnail: {
-    type: String,
-    required: [true, 'Thumbnail image is required']
+  featured: {
+    type: Boolean,
+    default: false
+  },
+  stock: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: [0, 'Stock cannot be negative']
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   },
   isActive: {
     type: Boolean,
@@ -62,8 +69,7 @@ const productSchema = new mongoose.Schema({
   ratings: [{
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      ref: 'User'
     },
     rating: {
       type: Number,
@@ -76,102 +82,11 @@ const productSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }],
-  averageRating: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 5
-  },
-  numReviews: {
-    type: Number,
-    default: 0
-  },
-  tags: [{
-    type: String,
-    lowercase: true
-  }],
-  dimensions: {
-    length: Number,
-    width: Number,
-    height: Number,
-    unit: {
-      type: String,
-      enum: ['cm', 'inch'],
-      default: 'cm'
-    }
-  },
-  weight: {
-    value: Number,
-    unit: {
-      type: String,
-      enum: ['kg', 'lb'],
-      default: 'kg'
-    }
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  featured: {
-    type: Boolean,
-    default: false
-  }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  }]
 });
 
-// Indexes
-productSchema.index({ name: 'text', description: 'text' });
-productSchema.index({ category: 1 });
-productSchema.index({ price: 1 });
-productSchema.index({ averageRating: -1 });
-
-// Calculate average rating
-productSchema.methods.calculateAverageRating = function() {
-  if (this.ratings.length === 0) {
-    this.averageRating = 0;
-    this.numReviews = 0;
-    return;
-  }
-  
-  const sum = this.ratings.reduce((acc, item) => acc + item.rating, 0);
-  this.averageRating = Math.round((sum / this.ratings.length) * 10) / 10;
-  this.numReviews = this.ratings.length;
-};
-
-// Add rating
-productSchema.methods.addRating = async function(userId, rating, review) {
-  const existingRatingIndex = this.ratings.findIndex(
-    r => r.user.toString() === userId.toString()
-  );
-
-  if (existingRatingIndex >= 0) {
-    this.ratings[existingRatingIndex] = { user: userId, rating, review };
-  } else {
-    this.ratings.push({ user: userId, rating, review });
-  }
-
-  this.calculateAverageRating();
-  await this.save();
-};
-
-// Check stock availability
-productSchema.methods.checkStock = function(quantity) {
-  return this.stock >= quantity;
-};
-
-// Update stock
-productSchema.methods.updateStock = async function(quantity) {
-  if (this.stock < quantity) {
-    throw new Error('Insufficient stock');
-  }
-  this.stock -= quantity;
-  return this.save();
-};
+// Create index for faster queries
+productSchema.index({ name: 'text', description: 'text', category: 'text' });
 
 // Virtual for URL
 productSchema.virtual('url').get(function() {
@@ -179,4 +94,4 @@ productSchema.virtual('url').get(function() {
 });
 
 const Product = mongoose.model('Product', productSchema);
-module.exports = Product;
+module.exports = Product; 

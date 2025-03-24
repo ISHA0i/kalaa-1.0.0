@@ -16,8 +16,8 @@ const Home = ({ title = "Artists Are With Admirers", subtitle = "Only Artists Ca
   const fetchFeaturedData = async () => {
     try {
       // Attempt to fetch data from the backend
-      const artworksResponse = await fetch('http://localhost:5001/api/featured-artworks');
-      const artistsResponse = await fetch('http://localhost:5001/api/featured-artists');
+      const artworksResponse = await fetch('http://localhost:5002/api/featured-artworks');
+      const artistsResponse = await fetch('http://localhost:5002/api/featured-artists');
 
       if (!artworksResponse.ok || !artistsResponse.ok) {
         throw new Error('Failed to fetch data');
