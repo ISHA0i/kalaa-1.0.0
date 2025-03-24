@@ -17,7 +17,7 @@ const nodemailer = require('nodemailer');
 // const { ValidationError, NotFoundError } = require('./errors/AppError');
 
 const app = express();
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 const BASE_URL = `http://localhost:${PORT}`;
 // Rate limiting
 const limiter = rateLimit({
@@ -69,6 +69,37 @@ app.get('/health', (req, res) => {
 
 // API version prefix
 const API_PREFIX = '/api';
+
+// Global routes
+app.get(`${API_PREFIX}/featured-artworks`, async (req, res) => {
+  try {
+    // Get products with featured flag if any model has it
+    const Product = require('./models/ProductModel');
+    const featuredProducts = await Product.find({ featured: true })
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .select('-__v')
+      .lean();
+    
+    // If no featured products, return the newest products
+    if (featuredProducts.length === 0) {
+      const newestProducts = await Product.find()
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .select('-__v')
+        .lean();
+      
+      console.log('No featured products, returning newest products');
+      return res.status(200).json(newestProducts);
+    }
+    
+    console.log('Featured products retrieved successfully', { count: featuredProducts.length });
+    res.status(200).json(featuredProducts);
+  } catch (error) {
+    console.error('Error fetching featured products:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 // Routes
 app.use(`${API_PREFIX}/products`, productRoutes);

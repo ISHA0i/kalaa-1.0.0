@@ -1,4 +1,4 @@
-const { Product } = require('../models/ProductModel');
+const Product = require('../models/ProductModel');
 const mongoose = require('mongoose');
 const { logger } = require('../utils/logger');
 const { ValidationError, NotFoundError } = require('../errors/AppError');
@@ -204,13 +204,23 @@ exports.deleteProduct = catchAsync(async (req, res) => {
 
 exports.addProduct = async (req, res) => {
   try {
-    const product = new Product(req.body);
+    // Create a product with default values for required fields that might be missing
+    const productData = {
+      ...req.body,
+      createdBy: req.user ? req.user._id : mongoose.Types.ObjectId('000000000000000000000000'),  // Default if not provided
+      stock: req.body.stock || 0,
+      category: (req.body.category || 'other').toLowerCase(),
+      thumbnail: req.body.thumbnail || req.body.images?.[0]?.url || 'default-thumbnail.jpg'
+    };
+
+    const product = new Product(productData);
     await product.save();
+    
     logger.info('Product added successfully', { productId: product._id });
     res.status(201).json({ message: 'Product added successfully', product });
   } catch (error) {
     logger.error('Error adding product:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
 

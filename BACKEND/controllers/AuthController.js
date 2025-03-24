@@ -8,40 +8,41 @@ const { catchAsync } = require('../errors/servererror');
 const nodemailer = require('nodemailer');
 
 exports.registerUser = catchAsync(async (req, res) => {
-  const { name, email, password } = req.body;
+  try {
+    const { name, email, password } = req.body;
 
-  // Validation
-  const error = new ValidationError('Registration validation failed');
-  if (!name) error.addError('name', 'Name is required');
-  if (!email) error.addError('email', 'Email is required');
-  if (!password) error.addError('password', 'Password is required');
-  if (error.validationErrors.length > 0) throw error;
+    // Validation
+    const error = new ValidationError('Registration validation failed');
+    if (!name) error.addError('name', 'Name is required');
+    if (!email) error.addError('email', 'Email is required');
+    if (!password) error.addError('password', 'Password is required');
+    if (error.validationErrors.length > 0) throw error;
 
-  // Check if user exists
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    throw new ValidationError('User already exists');
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ValidationError('User already exists');
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    await user.save();
+
+    logger.info('User registered successfully', { userId: user._id });
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    logger.error('Error registering user:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-
-  // Hash password
-  const salt = await bcrypt.genSalt(12);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  // Create user
-  const user = new User({
-    name,
-    email,
-    password: hashedPassword
-  });
-
-  await user.save();
-
-  logger.info('New user registered', { userId: user._id, email });
-
-  res.status(201).json({
-    status: 'success',
-    message: 'User registered successfully'
-  });
 });
 
 exports.loginUser = catchAsync(async (req, res) => {
@@ -149,7 +150,3 @@ exports.forgotPassword = catchAsync(async (req, res) => {
     message: 'Password reset token sent to email'
   });
 });
-
-
-logger.info('New user registered', { userId: user._id, email });
-logger.error('Error registering user:', error);

@@ -21,6 +21,12 @@ const MAX_RETRIES = 5;
 
 const connectToMongo = async () => {
   try {
+    // Validate MongoDB URI
+    if (!mongoURI) {
+      console.error('MongoDB URI is not defined in environment variables');
+      return process.exit(1);
+    }
+
     // Handle initial connection errors
     mongoose.connection.on('error', (err) => {
       console.error('MongoDB connection error:', err);

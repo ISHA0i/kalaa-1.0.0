@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const verifyToken = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
 const { validateProductData } = require('../utils/validation');
 const { logger } = require('../utils/logger');
 const cacheService = require('../utils/cache');
@@ -148,7 +148,7 @@ router.get('/:id', cacheService.cache({
 });
 
 // Protected routes (Admin only)
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const validation = validateProductData(req.body);
     if (!validation.isValid) {
@@ -156,14 +156,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ errors: validation.errors });
     }
 
-    // Add defaults for required fields
-    const productData = {
+    const product = new Product({
       ...req.body,
-      category: req.body.category.toLowerCase(),
-      createdBy: '000000000000000000000000' // Default created by
-    };
-
-    const product = new Product(productData);
+      category: req.body.category.toLowerCase()
+    });
 
     await product.save();
     
@@ -174,11 +170,14 @@ router.post('/', async (req, res) => {
     res.status(201).json(product);
   } catch (error) {
     logger.error('Error creating product:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-router.put('/:id', async (req, res) => {
+// Make sure the controller function exists and is working
+router.post('/add-product', verifyToken, productController.addProduct);
+
+router.put('/:id', verifyToken, async (req, res) => {
   try {
     const validation = validateProductData(req.body);
     if (!validation.isValid) {
@@ -215,7 +214,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
