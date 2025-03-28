@@ -1,3 +1,25 @@
+# Dependencies
 node_modules/
+
+# Environment variables
 .env
-.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+/build
+/dist
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.idea/
+.vscode/
+
+# Miscellaneous
+uploads/
