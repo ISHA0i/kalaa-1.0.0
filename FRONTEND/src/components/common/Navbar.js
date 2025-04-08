@@ -61,17 +61,15 @@ const Navbar = () => {
               </Link>
             </li>
             <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
+              <button
+                className="nav-link dropdown-toggle btn btn-link"
                 id="navbarDropdown"
-                role="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
                 <i className="bi bi-person-circle"></i>
                 <span className="ms-1">Account</span>
-              </a>
+              </button>
               <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <li>
                   <Link className="dropdown-item" to="/signin">
